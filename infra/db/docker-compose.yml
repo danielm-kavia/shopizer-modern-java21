@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: shopizer-postgres16
+    restart: unless-stopped
+    environment:
+      # These defaults are for local development only.
+      # In real environments, inject via env/secret management.
+      POSTGRES_DB: shopizer
+      POSTGRES_USER: shopizer
+      POSTGRES_PASSWORD: shopizer
+    ports:
+      - "5432:5432"
+    volumes:
+      - shopizer_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shopizer -d shopizer"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  shopizer_pgdata:
