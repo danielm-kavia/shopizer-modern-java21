@@ -5,6 +5,13 @@ spring:
   application:
     name: gateway
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Matches the seeded Keycloak realm under infra/keycloak (see infra/keycloak/realm-export).
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/shopizer}
+
   cloud:
     gateway:
       default-filters:
@@ -16,16 +23,13 @@ spring:
           predicates:
             - Path=/api/customers/**
 
+        - id: catalog-service
+          uri: ${CATALOG_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/catalog/**
+
 management:
   endpoints:
     web:
       exposure:
         include: health,info
-
-spring:
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          # Matches the seeded Keycloak realm under infra/keycloak (see infra/keycloak/realm-export).
-          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/shopizer}
