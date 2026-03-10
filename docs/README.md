@@ -3,7 +3,7 @@
 ## Overview
 This folder contains living architecture and design documentation for the `shopizer-modern-java21` repository. The intent is to keep these documents synchronized with the repository contents as the modernization effort progresses.
 
-At the time of writing, the repository includes only a minimal `README.md` at the root and placeholder files under `docs/` and `infra/`. Most architectural and infrastructure details are therefore not evidenced yet and are explicitly marked as unavailable in the documents.
+The repository now includes a **multi-module Maven baseline** plus initial Spring Boot 3.x services (`gateway`, `customer-service`) and local dev infrastructure under `infra/` (PostgreSQL 16 and Keycloak). These documents should be kept synchronized with the concrete files and runtime behavior evidenced in the repo.
 
 ## Documents
 The following documents are maintained in this folder.

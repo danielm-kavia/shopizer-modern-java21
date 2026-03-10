@@ -1,22 +1,20 @@
 # shopizer-modern-java21 Infrastructure Templates
 
 ## Overview
-This folder is intended to hold infrastructure templates (for example, containerization, local development environments, and deployment manifests) for the `shopizer-modern-java21` modernization target.
+This folder contains **validated local development infrastructure** for the `shopizer-modern-java21` modernization target.
 
-## Current state
-The current repository snapshot contains only a placeholder file under `infra/` and does not include any of the usual infrastructure assets (for example, `Dockerfile`, `docker-compose.yml`, Helm charts, Terraform, or Kubernetes manifests). As a result, there is no deployable or runnable infrastructure evidenced in this repository yet.
+## Local development services
+### PostgreSQL 16
+- Compose file: `infra/db/docker-compose.yml`
+- Docs: `infra/db/README.md`
+- Exposes: `localhost:5432`
 
-## Intended contents as modernization progresses
-As the application code and build configuration are added, this folder should be populated with templates that are directly validated against the repository, such as:
-- A `Dockerfile` that builds and runs the Java 21 application artifact.
-- A `docker-compose.yml` for local development (application plus required dependencies such as a database).
-- Optional Kubernetes manifests or Helm charts for deployment, once the runtime requirements are known.
-
-Each template should clearly document:
-- Required environment variables and secrets.
-- Exposed ports and health check endpoints.
-- How persistence is provisioned (if a database is used).
-- How migrations and initialization are handled.
+### Keycloak (OIDC / JWT issuer)
+- Compose file: `infra/keycloak/docker-compose.yml`
+- Realm seed: `infra/keycloak/realm-export/shopizer-realm.json`
+- Docs: `infra/keycloak/README.md`
+- Exposes: `localhost:8080`
+- Issuer used by services: `http://localhost:8080/realms/shopizer`
 
 ## Evidence-first rule
-Do not add templates that assume a build tool, module layout, or runtime entrypoint that is not present in the repository. Once `pom.xml` or `build.gradle` and an application entrypoint exist, templates can be added and then referenced back into `docs/architecture.md`.
+Infrastructure templates should match the build/runtime artifacts in this repository. As additional services are added (Dockerfiles, compose stacks, k8s manifests), update both this README and the `docs/` architecture docs to reference concrete file paths and ports.
