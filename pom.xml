@@ -28,6 +28,7 @@
     <module>payment-service</module>
     <module>shipping-service</module>
     <module>inventory-service</module>
+    <module>pricing-service</module>
   </modules>
 
   <properties>
