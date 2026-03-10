@@ -5,7 +5,7 @@ Shopizer java e-commerce software modernized to Java 21
 From repository root:
 
 ```bash
-mvn -q -DskipTests package
+./mvnw -q -DskipTests package
 ```
 
 Modules (current scaffold):
