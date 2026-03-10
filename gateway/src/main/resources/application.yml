@@ -28,6 +28,11 @@ spring:
           predicates:
             - Path=/api/catalog/**
 
+        - id: cart-service
+          uri: ${CART_SERVICE_URL:http://localhost:8084}
+          predicates:
+            - Path=/api/cart/**
+
 management:
   endpoints:
     web:
