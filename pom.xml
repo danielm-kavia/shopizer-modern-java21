@@ -24,6 +24,7 @@
     <module>catalog-service</module>
     <module>cart-service</module>
     <module>order-service</module>
+    <module>checkout-service</module>
   </modules>
 
   <properties>

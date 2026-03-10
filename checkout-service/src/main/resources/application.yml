@@ -1,0 +1,27 @@
+server:
+  port: 8086
+
+spring:
+  application:
+    name: checkout-service
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/shopizer}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+shopizer:
+  clients:
+    cart:
+      base-url: ${CART_SERVICE_URL:http://localhost:8084}
+      timeout-ms: ${CART_SERVICE_TIMEOUT_MS:3000}
+    order:
+      base-url: ${ORDER_SERVICE_URL:http://localhost:8085}
+      timeout-ms: ${ORDER_SERVICE_TIMEOUT_MS:3000}
