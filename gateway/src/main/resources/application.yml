@@ -53,6 +53,11 @@ spring:
           predicates:
             - Path=/api/shipping/**
 
+        - id: inventory-service
+          uri: ${INVENTORY_SERVICE_URL:http://localhost:8089}
+          predicates:
+            - Path=/api/inventory/**
+
 management:
   endpoints:
     web:
