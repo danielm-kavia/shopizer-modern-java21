@@ -26,6 +26,7 @@
     <module>order-service</module>
     <module>checkout-service</module>
     <module>payment-service</module>
+    <module>shipping-service</module>
   </modules>
 
   <properties>

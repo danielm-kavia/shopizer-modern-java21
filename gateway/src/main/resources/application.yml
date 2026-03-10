@@ -48,6 +48,11 @@ spring:
           predicates:
             - Path=/api/payments/**
 
+        - id: shipping-service
+          uri: ${SHIPPING_SERVICE_URL:http://localhost:8088}
+          predicates:
+            - Path=/api/shipping/**
+
 management:
   endpoints:
     web:

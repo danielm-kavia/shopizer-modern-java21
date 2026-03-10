@@ -1,0 +1,44 @@
+server:
+  port: 8088
+
+spring:
+  application:
+    name: shipping-service
+
+  # Optional datasource + Flyway for quote logging.
+  # If you do not provide SHIPPING_DB_* env vars, you can still run with in-memory providers,
+  # but you should disable Flyway and JPA validation (see comments below).
+  datasource:
+    # IMPORTANT: request these env vars from the orchestrator/user as needed
+    url: ${SHIPPING_DB_URL:jdbc:postgresql://localhost:5432/shopizer}
+    username: ${SHIPPING_DB_USER:shopizer}
+    password: ${SHIPPING_DB_PASSWORD:shopizer}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: shopizer
+
+  flyway:
+    # For Phase 1, we keep migrations minimal and enable by default to match other services.
+    # If you are running without a database, set SHIPPING_FLYWAY_ENABLED=false
+    enabled: ${SHIPPING_FLYWAY_ENABLED:true}
+    default-schema: shopizer
+    schemas: shopizer
+    locations: classpath:db/migration
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/shopizer}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
