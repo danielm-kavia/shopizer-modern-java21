@@ -21,6 +21,7 @@
   <modules>
     <module>gateway</module>
     <module>customer-service</module>
+    <module>catalog-service</module>
   </modules>
 
   <properties>
