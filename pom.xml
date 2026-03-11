@@ -29,6 +29,7 @@
     <module>shipping-service</module>
     <module>inventory-service</module>
     <module>pricing-service</module>
+    <module>tax-service</module>
   </modules>
 
   <properties>

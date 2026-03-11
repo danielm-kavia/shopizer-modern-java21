@@ -63,6 +63,11 @@ spring:
           predicates:
             - Path=/api/pricing/**
 
+        - id: tax-service
+          uri: ${TAX_SERVICE_URL:http://localhost:8091}
+          predicates:
+            - Path=/api/tax/**
+
 management:
   endpoints:
     web:
