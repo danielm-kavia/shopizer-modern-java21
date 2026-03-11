@@ -8,6 +8,9 @@ The repository now includes a **multi-module Maven baseline** plus initial Sprin
 ## Documents
 The following documents are maintained in this folder.
 
+### Local development runbooks
+- `run-local-mac-apple-silicon.md` - Run the full modernized stack locally on a MacBook (Apple Silicon / M3), including Keycloak token retrieval and the MVP happy path.
+
 ### MVP runnable walkthrough
 - `mvp-happy-path.md` - Copy/paste end-to-end happy path via gateway + JWT.
 
