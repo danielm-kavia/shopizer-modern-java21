@@ -37,3 +37,6 @@ shopizer:
     inventory:
       base-url: ${INVENTORY_SERVICE_URL:http://localhost:8087}
       timeout-ms: ${INVENTORY_SERVICE_TIMEOUT_MS:3000}
+    payment:
+      base-url: ${PAYMENT_SERVICE_URL:http://localhost:8088}
+      timeout-ms: ${PAYMENT_SERVICE_TIMEOUT_MS:5000}

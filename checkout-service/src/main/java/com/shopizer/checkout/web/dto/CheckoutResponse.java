@@ -20,5 +20,20 @@ public record CheckoutResponse(
     java.math.BigDecimal tax,
 
     @Schema(description = "Computed total after discount + tax.", example = "98.25")
-    java.math.BigDecimal total
+    java.math.BigDecimal total,
+
+    @Schema(description = "Payment intent id created/used by payment-service for this checkout authorization")
+    UUID paymentIntentId,
+
+    @Schema(description = "Payment provider (e.g. PAYPAL)")
+    String paymentProvider,
+
+    @Schema(description = "Payment authorization status returned by payment-service (e.g. AUTHORIZED, FAILED)")
+    String paymentStatus,
+
+    @Schema(description = "Provider authorization id (if available)")
+    String providerAuthorizationId,
+
+    @Schema(description = "Provider order id (if available)")
+    String providerOrderId
 ) {}

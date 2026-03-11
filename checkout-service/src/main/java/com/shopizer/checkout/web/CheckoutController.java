@@ -69,7 +69,12 @@ public class CheckoutController {
             result.subtotal(),
             result.discount(),
             result.tax(),
-            result.total()
+            result.total(),
+            result.paymentIntentId(),
+            result.paymentProvider(),
+            result.paymentStatus(),
+            result.providerAuthorizationId(),
+            result.providerOrderId()
         ));
   }
 }

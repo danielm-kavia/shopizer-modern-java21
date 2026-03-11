@@ -3,11 +3,11 @@ package com.shopizer.checkout.service;
 import com.shopizer.checkout.client.CartServiceClient;
 import com.shopizer.checkout.client.InventoryServiceClient;
 import com.shopizer.checkout.client.OrderServiceClient;
-import com.shopizer.checkout.client.PricingServiceClient;
-import com.shopizer.checkout.client.PromotionsServiceClient;
-import com.shopizer.checkout.client.TaxServiceClient;
+import com.shopizer.checkout.client.PaymentServiceClient;
 import com.shopizer.checkout.client.dto.ApplyCouponRequest;
 import com.shopizer.checkout.client.dto.ApplyCouponResponse;
+import com.shopizer.checkout.client.dto.AuthorizePaymentRequest;
+import com.shopizer.checkout.client.dto.AuthorizePaymentResponse;
 import com.shopizer.checkout.client.dto.CartResponse;
 import com.shopizer.checkout.client.dto.CreateOrderItemRequest;
 import com.shopizer.checkout.client.dto.CreateOrderRequest;
@@ -17,6 +17,9 @@ import com.shopizer.checkout.client.dto.PricingResolutionResponse;
 import com.shopizer.checkout.client.dto.TaxCalculateRequest;
 import com.shopizer.checkout.client.dto.TaxCalculateResponse;
 import com.shopizer.checkout.client.dto.TaxLine;
+import com.shopizer.checkout.client.PricingServiceClient;
+import com.shopizer.checkout.client.PromotionsServiceClient;
+import com.shopizer.checkout.client.TaxServiceClient;
 import com.shopizer.checkout.service.CheckoutExceptions.CheckoutInventoryReservationException;
 import com.shopizer.checkout.service.CheckoutExceptions.CheckoutOrchestrationException;
 import com.shopizer.checkout.service.CheckoutExceptions.CheckoutValidationException;
@@ -59,6 +62,7 @@ public class CreateOrderFromCartFlow {
   private final TaxServiceClient taxServiceClient;
   private final PromotionsServiceClient promotionsServiceClient;
   private final InventoryServiceClient inventoryServiceClient;
+  private final PaymentServiceClient paymentServiceClient;
 
   public CreateOrderFromCartFlow(
       CartServiceClient cartServiceClient,
@@ -66,7 +70,8 @@ public class CreateOrderFromCartFlow {
       PricingServiceClient pricingServiceClient,
       TaxServiceClient taxServiceClient,
       PromotionsServiceClient promotionsServiceClient,
-      InventoryServiceClient inventoryServiceClient
+      InventoryServiceClient inventoryServiceClient,
+      PaymentServiceClient paymentServiceClient
   ) {
     this.cartServiceClient = cartServiceClient;
     this.orderServiceClient = orderServiceClient;
@@ -74,15 +79,28 @@ public class CreateOrderFromCartFlow {
     this.taxServiceClient = taxServiceClient;
     this.promotionsServiceClient = promotionsServiceClient;
     this.inventoryServiceClient = inventoryServiceClient;
+    this.paymentServiceClient = paymentServiceClient;
   }
 
   /**
-   * Result object for checkout calculation + order creation.
+   * Result object for checkout calculation + order creation + payment authorization.
    *
    * <p>Invariants:
    * - subtotal/discount/tax/total are non-null (BigDecimal.ZERO when not applicable).
+   * - payment authorization fields may be null only if payment-service returns null (treated as failure).
    */
-  public record CheckoutResult(UUID orderId, BigDecimal subtotal, BigDecimal discount, BigDecimal tax, BigDecimal total) {}
+  public record CheckoutResult(
+      UUID orderId,
+      BigDecimal subtotal,
+      BigDecimal discount,
+      BigDecimal tax,
+      BigDecimal total,
+      UUID paymentIntentId,
+      String paymentProvider,
+      String paymentStatus,
+      String providerAuthorizationId,
+      String providerOrderId
+  ) {}
 
   // PUBLIC_INTERFACE
   public CheckoutResult execute(
@@ -171,10 +189,39 @@ public class CreateOrderFromCartFlow {
         throw new CheckoutOrchestrationException("order-service returned null/invalid order response", null);
       }
 
-      log.info("flow=CreateOrderFromCartFlow event=success cartId={} orderId={} subtotal={} discount={} tax={} total={}",
-          cartId, created.getId(), subtotal, discount, taxAmount, total);
+      // Phase 3: authorize payment (PayPal authorize-only) after inventory reserve and totals are known.
+      // Contract:
+      // - propagates caller JWT
+      // - uses deterministic idempotency key so retries are safe
+      // Failure mode:
+      // - any payment-service call failure fails checkout with a 502 (at API boundary) so caller can retry safely.
+      AuthorizePaymentResponse paymentAuth = authorizePaymentOrThrow(
+          merchantStoreId,
+          created.getId(),
+          customerId,
+          cart.currency(),
+          total,
+          cartId,
+          bearerToken
+      );
 
-      return new CheckoutResult(created.getId(), subtotal, discount, taxAmount, total);
+      log.info("flow=CreateOrderFromCartFlow event=success cartId={} orderId={} subtotal={} discount={} tax={} total={} paymentStatus={} paymentIntentId={}",
+          cartId, created.getId(), subtotal, discount, taxAmount, total,
+          paymentAuth != null ? paymentAuth.status() : null,
+          paymentAuth != null ? paymentAuth.paymentIntentId() : null);
+
+      return new CheckoutResult(
+          created.getId(),
+          subtotal,
+          discount,
+          taxAmount,
+          total,
+          paymentAuth.paymentIntentId(),
+          paymentAuth.provider(),
+          paymentAuth.status(),
+          paymentAuth.providerAuthorizationId(),
+          paymentAuth.providerOrderId()
+      );
     } catch (CheckoutValidationException ex) {
       log.warn("flow=CreateOrderFromCartFlow event=validation_failed cartId={} reason={}", cartId, ex.getMessage());
       throw ex;
@@ -293,5 +340,62 @@ public class CreateOrderFromCartFlow {
     // This is an interim adapter until tax-service aligns on store UUID or storeCode.
     int h = merchantStoreId.toString().hashCode();
     return Integer.toUnsignedLong(h);
+  }
+
+  private AuthorizePaymentResponse authorizePaymentOrThrow(
+      UUID merchantStoreId,
+      UUID orderId,
+      UUID customerId,
+      String currency,
+      BigDecimal total,
+      UUID cartId,
+      String bearerToken
+  ) {
+    // Invariant: total is computed and non-null (see CheckoutResult contract). Treat null as 0 for safety.
+    BigDecimal safeTotal = total != null ? total : BigDecimal.ZERO;
+    long amountMinor = toMinorUnitsOrThrow(safeTotal);
+
+    String idempotencyKey = buildPaymentIdempotencyKey(cartId, orderId);
+
+    try {
+      AuthorizePaymentResponse resp = paymentServiceClient.authorizePayPal(
+          new AuthorizePaymentRequest(
+              merchantStoreId,
+              orderId,
+              customerId,
+              currency,
+              amountMinor,
+              idempotencyKey
+          ),
+          bearerToken
+      );
+
+      if (resp == null || resp.paymentIntentId() == null || resp.status() == null) {
+        throw new CheckoutOrchestrationException("payment-service returned null/invalid authorization response", null);
+      }
+
+      return resp;
+    } catch (PaymentServiceClient.PaymentServiceClientException ex) {
+      // Add actionable context but preserve root cause.
+      throw new CheckoutOrchestrationException(
+          "Payment authorization failed (orderId=" + orderId + ", idempotencyKey=" + idempotencyKey + ")", ex);
+    }
+  }
+
+  private static String buildPaymentIdempotencyKey(UUID cartId, UUID orderId) {
+    // Deterministic idempotency key so client retries do not double-authorize.
+    // Choice: stable across retries of the same checkout attempt (cart+order).
+    return "checkout-" + cartId + "-" + orderId;
+  }
+
+  private static long toMinorUnitsOrThrow(BigDecimal amountMajor) {
+    // Phase 1 contract: payment-service expects minor units (long).
+    // Invariant: total has 2 decimal places in typical currencies; enforce exact conversion to avoid silent rounding bugs.
+    try {
+      return amountMajor.movePointRight(2).longValueExact();
+    } catch (ArithmeticException ex) {
+      throw new CheckoutOrchestrationException(
+          "Cannot convert total amount to minor units without rounding: amount=" + amountMajor, ex);
+    }
   }
 }
