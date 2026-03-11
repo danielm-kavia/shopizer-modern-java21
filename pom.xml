@@ -30,6 +30,7 @@
     <module>inventory-service</module>
     <module>pricing-service</module>
     <module>tax-service</module>
+    <module>promotions-service</module>
   </modules>
 
   <properties>

@@ -68,6 +68,11 @@ spring:
           predicates:
             - Path=/api/tax/**
 
+        - id: promotions-service
+          uri: ${PROMOTIONS_SERVICE_URL:http://localhost:8092}
+          predicates:
+            - Path=/api/promotions/**
+
 management:
   endpoints:
     web:
