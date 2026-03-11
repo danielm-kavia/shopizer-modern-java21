@@ -1,5 +1,6 @@
 package com.shopizer.checkout.web;
 
+import com.shopizer.checkout.service.CheckoutExceptions.CheckoutInventoryReservationException;
 import com.shopizer.checkout.service.CheckoutExceptions.CheckoutOrchestrationException;
 import com.shopizer.checkout.service.CheckoutExceptions.CheckoutValidationException;
 import java.time.Instant;
@@ -31,6 +32,16 @@ public class ApiExceptionHandler {
         "timestamp", Instant.now().toString(),
         "error", "REQUEST_VALIDATION_ERROR",
         "message", "Request validation failed"
+    ));
+  }
+
+  @ExceptionHandler(CheckoutInventoryReservationException.class)
+  public ResponseEntity<Map<String, Object>> handleInventoryReservation(CheckoutInventoryReservationException ex) {
+    // Phase 2: treat as conflict (cart cannot be checked out due to insufficient stock).
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
+        "timestamp", Instant.now().toString(),
+        "error", "INVENTORY_RESERVATION_FAILED",
+        "message", ex.getMessage()
     ));
   }
 

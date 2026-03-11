@@ -1,6 +1,7 @@
 package com.shopizer.checkout.service;
 
 import com.shopizer.checkout.client.CartServiceClient;
+import com.shopizer.checkout.client.InventoryServiceClient;
 import com.shopizer.checkout.client.OrderServiceClient;
 import com.shopizer.checkout.client.PricingServiceClient;
 import com.shopizer.checkout.client.PromotionsServiceClient;
@@ -10,11 +11,13 @@ import com.shopizer.checkout.client.dto.ApplyCouponResponse;
 import com.shopizer.checkout.client.dto.CartResponse;
 import com.shopizer.checkout.client.dto.CreateOrderItemRequest;
 import com.shopizer.checkout.client.dto.CreateOrderRequest;
+import com.shopizer.checkout.client.dto.InventoryReserveRequest;
 import com.shopizer.checkout.client.dto.OrderResponse;
 import com.shopizer.checkout.client.dto.PricingResolutionResponse;
 import com.shopizer.checkout.client.dto.TaxCalculateRequest;
 import com.shopizer.checkout.client.dto.TaxCalculateResponse;
 import com.shopizer.checkout.client.dto.TaxLine;
+import com.shopizer.checkout.service.CheckoutExceptions.CheckoutInventoryReservationException;
 import com.shopizer.checkout.service.CheckoutExceptions.CheckoutOrchestrationException;
 import com.shopizer.checkout.service.CheckoutExceptions.CheckoutValidationException;
 import java.math.BigDecimal;
@@ -55,19 +58,22 @@ public class CreateOrderFromCartFlow {
   private final PricingServiceClient pricingServiceClient;
   private final TaxServiceClient taxServiceClient;
   private final PromotionsServiceClient promotionsServiceClient;
+  private final InventoryServiceClient inventoryServiceClient;
 
   public CreateOrderFromCartFlow(
       CartServiceClient cartServiceClient,
       OrderServiceClient orderServiceClient,
       PricingServiceClient pricingServiceClient,
       TaxServiceClient taxServiceClient,
-      PromotionsServiceClient promotionsServiceClient
+      PromotionsServiceClient promotionsServiceClient,
+      InventoryServiceClient inventoryServiceClient
   ) {
     this.cartServiceClient = cartServiceClient;
     this.orderServiceClient = orderServiceClient;
     this.pricingServiceClient = pricingServiceClient;
     this.taxServiceClient = taxServiceClient;
     this.promotionsServiceClient = promotionsServiceClient;
+    this.inventoryServiceClient = inventoryServiceClient;
   }
 
   /**
@@ -103,7 +109,12 @@ public class CreateOrderFromCartFlow {
         throw new CheckoutValidationException("Cart is empty; cannot checkout");
       }
 
-      // Phase 1 totals calculation:
+      // Phase 2: reserve inventory for all cart lines before creating an order.
+      // - Propagates the caller JWT.
+      // - Fails fast if any line cannot be reserved (surface as 409 at API boundary).
+      reserveInventoryOrThrow(cart, merchantStoreId, bearerToken);
+
+      // Phase 1 totals calculation (kept intact):
       // 1) pricing-service for each cart line => subtotal
       // 2) promotions-service (optional coupon) => discount + total after discount (pre-tax in our composition)
       // 3) tax-service => tax on discounted subtotal (Phase 1 uses lines: qty * unitPrice)
@@ -190,6 +201,23 @@ public class CreateOrderFromCartFlow {
     if (cart.currency() == null || cart.currency().isBlank()) {
       throw new CheckoutValidationException("Cart currency is missing");
     }
+  }
+
+  private void reserveInventoryOrThrow(CartResponse cart, UUID merchantStoreId, String bearerToken) {
+    // inventory-service expects a numeric storeId; use same stable adapter approach as tax-service.
+    long storeId = stableStoreIdLong(merchantStoreId);
+
+    cart.items().forEach(i -> {
+      try {
+        inventoryServiceClient.reserve(
+            new InventoryReserveRequest(storeId, i.sku(), i.quantity()),
+            bearerToken
+        );
+      } catch (InventoryServiceClient.InventoryReserveFailedException ex) {
+        throw new CheckoutInventoryReservationException(
+            "Inventory reservation failed for sku=" + i.sku() + " quantity=" + i.quantity(), ex);
+      }
+    });
   }
 
   private static CreateOrderRequest mapCartToCreateOrder(CartResponse cart) {

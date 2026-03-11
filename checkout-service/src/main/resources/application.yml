@@ -34,3 +34,6 @@ shopizer:
     promotions:
       base-url: ${PROMOTIONS_SERVICE_URL:http://localhost:8083}
       timeout-ms: ${PROMOTIONS_SERVICE_TIMEOUT_MS:3000}
+    inventory:
+      base-url: ${INVENTORY_SERVICE_URL:http://localhost:8087}
+      timeout-ms: ${INVENTORY_SERVICE_TIMEOUT_MS:3000}

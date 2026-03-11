@@ -18,4 +18,10 @@ public final class CheckoutExceptions {
       super(message, cause);
     }
   }
+
+  public static class CheckoutInventoryReservationException extends RuntimeException {
+    public CheckoutInventoryReservationException(String message, Throwable cause) {
+      super(message, cause);
+    }
+  }
 }

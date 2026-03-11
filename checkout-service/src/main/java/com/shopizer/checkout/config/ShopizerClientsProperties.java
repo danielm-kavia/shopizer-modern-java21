@@ -28,6 +28,9 @@ public class ShopizerClientsProperties {
   @Valid
   private final ServiceClientProperties promotions = new ServiceClientProperties();
 
+  @Valid
+  private final ServiceClientProperties inventory = new ServiceClientProperties();
+
   public ServiceClientProperties getCart() {
     return cart;
   }
@@ -46,6 +49,10 @@ public class ShopizerClientsProperties {
 
   public ServiceClientProperties getPromotions() {
     return promotions;
+  }
+
+  public ServiceClientProperties getInventory() {
+    return inventory;
   }
 
   public static class ServiceClientProperties {
