@@ -24,4 +24,18 @@ public final class CheckoutExceptions {
       super(message, cause);
     }
   }
+
+  /** Raised when shipping quotes cannot be obtained due to downstream failures. */
+  public static class CheckoutShippingQuoteException extends RuntimeException {
+    public CheckoutShippingQuoteException(String message, Throwable cause) {
+      super(message, cause);
+    }
+  }
+
+  /** Raised when caller selects a shipping quote that is not present in the returned set. */
+  public static class CheckoutShippingSelectionException extends RuntimeException {
+    public CheckoutShippingSelectionException(String message) {
+      super(message);
+    }
+  }
 }

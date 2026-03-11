@@ -34,6 +34,9 @@ public class ShopizerClientsProperties {
   @Valid
   private final ServiceClientProperties payment = new ServiceClientProperties();
 
+  @Valid
+  private final ServiceClientProperties shipping = new ServiceClientProperties();
+
   public ServiceClientProperties getCart() {
     return cart;
   }
@@ -60,6 +63,10 @@ public class ShopizerClientsProperties {
 
   public ServiceClientProperties getPayment() {
     return payment;
+  }
+
+  public ServiceClientProperties getShipping() {
+    return shipping;
   }
 
   public static class ServiceClientProperties {

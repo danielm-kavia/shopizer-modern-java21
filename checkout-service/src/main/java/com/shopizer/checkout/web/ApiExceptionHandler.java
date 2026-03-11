@@ -2,6 +2,8 @@ package com.shopizer.checkout.web;
 
 import com.shopizer.checkout.service.CheckoutExceptions.CheckoutInventoryReservationException;
 import com.shopizer.checkout.service.CheckoutExceptions.CheckoutOrchestrationException;
+import com.shopizer.checkout.service.CheckoutExceptions.CheckoutShippingQuoteException;
+import com.shopizer.checkout.service.CheckoutExceptions.CheckoutShippingSelectionException;
 import com.shopizer.checkout.service.CheckoutExceptions.CheckoutValidationException;
 import java.time.Instant;
 import java.util.Map;
@@ -41,6 +43,25 @@ public class ApiExceptionHandler {
     return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
         "timestamp", Instant.now().toString(),
         "error", "INVENTORY_RESERVATION_FAILED",
+        "message", ex.getMessage()
+    ));
+  }
+
+  @ExceptionHandler(CheckoutShippingSelectionException.class)
+  public ResponseEntity<Map<String, Object>> handleShippingSelection(CheckoutShippingSelectionException ex) {
+    return ResponseEntity.badRequest().body(Map.of(
+        "timestamp", Instant.now().toString(),
+        "error", "SHIPPING_SELECTION_INVALID",
+        "message", ex.getMessage()
+    ));
+  }
+
+  @ExceptionHandler(CheckoutShippingQuoteException.class)
+  public ResponseEntity<Map<String, Object>> handleShippingQuote(CheckoutShippingQuoteException ex) {
+    // Treat quote failures as a dependency error (caller can retry).
+    return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(Map.of(
+        "timestamp", Instant.now().toString(),
+        "error", "SHIPPING_QUOTE_FAILED",
         "message", ex.getMessage()
     ));
   }

@@ -1,6 +1,7 @@
 package com.shopizer.checkout.web.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.math.BigDecimal;
 import java.util.UUID;
 
 /**
@@ -11,16 +12,16 @@ public record CheckoutResponse(
     @Schema(description = "Checkout status") String status,
 
     @Schema(description = "Computed subtotal (sum of extended prices before discount/tax).", example = "100.00")
-    java.math.BigDecimal subtotal,
+    BigDecimal subtotal,
 
     @Schema(description = "Discount applied to subtotal via promotions-service (0 when no coupon).", example = "10.00")
-    java.math.BigDecimal discount,
+    BigDecimal discount,
 
     @Schema(description = "Computed tax amount.", example = "8.25")
-    java.math.BigDecimal tax,
+    BigDecimal tax,
 
     @Schema(description = "Computed total after discount + tax.", example = "98.25")
-    java.math.BigDecimal total,
+    BigDecimal total,
 
     @Schema(description = "Payment intent id created/used by payment-service for this checkout authorization")
     UUID paymentIntentId,
@@ -35,5 +36,20 @@ public record CheckoutResponse(
     String providerAuthorizationId,
 
     @Schema(description = "Provider order id (if available)")
-    String providerOrderId
+    String providerOrderId,
+
+    @Schema(description = "shipping-service quote request id (null if quoting was skipped/failed)")
+    UUID shippingQuoteRequestId,
+
+    @Schema(description = "Selected shipping quote provider (null if not selected/available)")
+    String shippingProvider,
+
+    @Schema(description = "Selected shipping quote service level (null if not selected/available)")
+    String shippingServiceLevel,
+
+    @Schema(description = "Selected shipping quote service name (null if not selected/available)")
+    String shippingServiceName,
+
+    @Schema(description = "Selected shipping amount (null if not selected/available)")
+    BigDecimal shippingAmount
 ) {}

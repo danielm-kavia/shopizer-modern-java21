@@ -4,6 +4,10 @@ import com.shopizer.checkout.client.CartServiceClient;
 import com.shopizer.checkout.client.InventoryServiceClient;
 import com.shopizer.checkout.client.OrderServiceClient;
 import com.shopizer.checkout.client.PaymentServiceClient;
+import com.shopizer.checkout.client.PricingServiceClient;
+import com.shopizer.checkout.client.PromotionsServiceClient;
+import com.shopizer.checkout.client.ShippingServiceClient;
+import com.shopizer.checkout.client.TaxServiceClient;
 import com.shopizer.checkout.client.dto.ApplyCouponRequest;
 import com.shopizer.checkout.client.dto.ApplyCouponResponse;
 import com.shopizer.checkout.client.dto.AuthorizePaymentRequest;
@@ -14,17 +18,21 @@ import com.shopizer.checkout.client.dto.CreateOrderRequest;
 import com.shopizer.checkout.client.dto.InventoryReserveRequest;
 import com.shopizer.checkout.client.dto.OrderResponse;
 import com.shopizer.checkout.client.dto.PricingResolutionResponse;
+import com.shopizer.checkout.client.dto.ShippingQuoteRequest;
+import com.shopizer.checkout.client.dto.ShippingQuoteResponse;
 import com.shopizer.checkout.client.dto.TaxCalculateRequest;
 import com.shopizer.checkout.client.dto.TaxCalculateResponse;
 import com.shopizer.checkout.client.dto.TaxLine;
-import com.shopizer.checkout.client.PricingServiceClient;
-import com.shopizer.checkout.client.PromotionsServiceClient;
-import com.shopizer.checkout.client.TaxServiceClient;
 import com.shopizer.checkout.service.CheckoutExceptions.CheckoutInventoryReservationException;
 import com.shopizer.checkout.service.CheckoutExceptions.CheckoutOrchestrationException;
+import com.shopizer.checkout.service.CheckoutExceptions.CheckoutShippingQuoteException;
+import com.shopizer.checkout.service.CheckoutExceptions.CheckoutShippingSelectionException;
 import com.shopizer.checkout.service.CheckoutExceptions.CheckoutValidationException;
+import com.shopizer.checkout.web.dto.CreateCheckoutRequest;
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -34,22 +42,29 @@ import org.springframework.stereotype.Service;
 /**
  * Flow: CreateOrderFromCartFlow
  *
- * Single canonical orchestration flow for Phase 1 checkout.
+ * Single canonical orchestration flow for checkout.
  *
  * Inputs:
  * - cartId, merchantStoreId, customerId
+ * - storeCode (pricing)
+ * - couponCode (optional)
+ * - shipping destination + optional selected quote
  * - bearerToken (Authorization header value) propagated to downstream services
  *
  * Output:
- * - created order id
+ * - CheckoutResult (order, totals, payment authorization, shipping selection)
  *
  * Errors / failure modes:
  * 1) Cart not found / unauthorized => CheckoutOrchestrationException (wrapped client error)
  * 2) Cart mismatch or empty cart => CheckoutValidationException (400 at API boundary)
- * 3) Order creation fails => CheckoutOrchestrationException
+ * 3) Inventory reservation fails => CheckoutInventoryReservationException (409 at API boundary)
+ * 4) Shipping quote downstream failure => CheckoutShippingQuoteException (502 at API boundary)
+ * 5) Shipping selection not found in quotes => CheckoutShippingSelectionException (400 at API boundary)
+ * 6) Order/payment failures => CheckoutOrchestrationException (502 at API boundary)
  *
  * Side effects:
- * - Network calls to cart-service and order-service.
+ * - Network calls to cart-service, inventory-service, pricing-service, promotions-service, tax-service,
+ *   shipping-service, order-service, payment-service.
  */
 @Service
 public class CreateOrderFromCartFlow {
@@ -63,6 +78,7 @@ public class CreateOrderFromCartFlow {
   private final PromotionsServiceClient promotionsServiceClient;
   private final InventoryServiceClient inventoryServiceClient;
   private final PaymentServiceClient paymentServiceClient;
+  private final ShippingServiceClient shippingServiceClient;
 
   public CreateOrderFromCartFlow(
       CartServiceClient cartServiceClient,
@@ -71,7 +87,8 @@ public class CreateOrderFromCartFlow {
       TaxServiceClient taxServiceClient,
       PromotionsServiceClient promotionsServiceClient,
       InventoryServiceClient inventoryServiceClient,
-      PaymentServiceClient paymentServiceClient
+      PaymentServiceClient paymentServiceClient,
+      ShippingServiceClient shippingServiceClient
   ) {
     this.cartServiceClient = cartServiceClient;
     this.orderServiceClient = orderServiceClient;
@@ -80,14 +97,31 @@ public class CreateOrderFromCartFlow {
     this.promotionsServiceClient = promotionsServiceClient;
     this.inventoryServiceClient = inventoryServiceClient;
     this.paymentServiceClient = paymentServiceClient;
+    this.shippingServiceClient = shippingServiceClient;
   }
 
   /**
-   * Result object for checkout calculation + order creation + payment authorization.
+   * Selected shipping details included in checkout result/response.
+   *
+   * <p>Invariants:
+   * - If requestId is null, all other fields should be null as well.
+   * - If provider is non-null, serviceLevel is non-null (identity tuple).
+   */
+  public record ShippingSelection(
+      UUID requestId,
+      String provider,
+      String serviceLevel,
+      String serviceName,
+      BigDecimal amount
+  ) {}
+
+  /**
+   * Result object for checkout calculation + order creation + payment authorization (+ shipping selection).
    *
    * <p>Invariants:
    * - subtotal/discount/tax/total are non-null (BigDecimal.ZERO when not applicable).
-   * - payment authorization fields may be null only if payment-service returns null (treated as failure).
+   * - payment authorization fields are expected non-null on success.
+   * - shipping selection may be null if quoting is not attempted; in this flow it is always attempted.
    */
   public record CheckoutResult(
       UUID orderId,
@@ -99,7 +133,8 @@ public class CreateOrderFromCartFlow {
       String paymentProvider,
       String paymentStatus,
       String providerAuthorizationId,
-      String providerOrderId
+      String providerOrderId,
+      ShippingSelection shippingSelection
   ) {}
 
   // PUBLIC_INTERFACE
@@ -109,11 +144,22 @@ public class CreateOrderFromCartFlow {
       UUID customerId,
       String storeCode,
       String couponCode,
+      CreateCheckoutRequest.Destination destination,
+      CreateCheckoutRequest.SelectedShippingQuote selectedShippingQuote,
+      Integer defaultItemWeightGrams,
       String bearerToken
   ) {
-    /** Execute the checkout orchestration to calculate totals and create an order from the given cart. */
-    log.info("flow=CreateOrderFromCartFlow event=start cartId={} merchantStoreId={} customerId={} storeCode={} hasCoupon={}",
-        cartId, merchantStoreId, customerId, storeCode, couponCode != null && !couponCode.isBlank());
+    /** Execute the checkout orchestration to calculate totals, quote/select shipping, create order, and authorize payment. */
+    log.info(
+        "flow=CreateOrderFromCartFlow event=start cartId={} merchantStoreId={} customerId={} storeCode={} hasCoupon={} destinationCountry={} selectedShippingProvided={}",
+        cartId,
+        merchantStoreId,
+        customerId,
+        storeCode,
+        couponCode != null && !couponCode.isBlank(),
+        destination != null ? destination.country() : null,
+        selectedShippingQuote != null
+    );
 
     try {
       CartResponse cart = cartServiceClient.getCart(cartId, bearerToken);
@@ -128,14 +174,8 @@ public class CreateOrderFromCartFlow {
       }
 
       // Phase 2: reserve inventory for all cart lines before creating an order.
-      // - Propagates the caller JWT.
-      // - Fails fast if any line cannot be reserved (surface as 409 at API boundary).
       reserveInventoryOrThrow(cart, merchantStoreId, bearerToken);
 
-      // Phase 1 totals calculation (kept intact):
-      // 1) pricing-service for each cart line => subtotal
-      // 2) promotions-service (optional coupon) => discount + total after discount (pre-tax in our composition)
-      // 3) tax-service => tax on discounted subtotal (Phase 1 uses lines: qty * unitPrice)
       String effectiveStoreCode = normalizeStoreCode(storeCode);
 
       BigDecimal subtotal = calculateSubtotal(cart, effectiveStoreCode, bearerToken);
@@ -162,9 +202,7 @@ public class CreateOrderFromCartFlow {
 
       TaxCalculateResponse tax = taxServiceClient.calculateTax(
           new TaxCalculateRequest(
-              // Phase 1 tax-service expects a numeric store id. We only have UUID merchantStoreId in this modernized stack.
-              // Minimal approach: pass a stable hash-derived positive long to satisfy API contract until store-id unification exists.
-              // This is logged and easily traceable.
+              // See note in original implementation: tax-service expects numeric store id.
               stableStoreIdLong(merchantStoreId),
               cart.items().stream()
                   .map(i -> new TaxLine(
@@ -179,9 +217,19 @@ public class CreateOrderFromCartFlow {
 
       BigDecimal taxAmount = (tax != null && tax.taxAmount() != null) ? tax.taxAmount() : BigDecimal.ZERO;
 
+      // Phase 4: quote/select shipping.
+      ShippingSelection shippingSelection = quoteAndSelectShippingOrThrow(
+          cart,
+          destination,
+          selectedShippingQuote,
+          defaultItemWeightGrams,
+          bearerToken
+      );
+
+      // IMPORTANT: total currently excludes shipping amount because order/payment APIs are Phase 1.
+      // We still return shipping selection so caller can display/confirm.
       BigDecimal total = discountedSubtotal.add(taxAmount);
 
-      // Keep existing order creation minimal/consistent with Phase 1: order-service DTO uses unitAmount long and currently set to 0.
       CreateOrderRequest createOrderRequest = mapCartToCreateOrder(cart);
       OrderResponse created = orderServiceClient.createOrder(createOrderRequest, bearerToken);
 
@@ -189,12 +237,6 @@ public class CreateOrderFromCartFlow {
         throw new CheckoutOrchestrationException("order-service returned null/invalid order response", null);
       }
 
-      // Phase 3: authorize payment (PayPal authorize-only) after inventory reserve and totals are known.
-      // Contract:
-      // - propagates caller JWT
-      // - uses deterministic idempotency key so retries are safe
-      // Failure mode:
-      // - any payment-service call failure fails checkout with a 502 (at API boundary) so caller can retry safely.
       AuthorizePaymentResponse paymentAuth = authorizePaymentOrThrow(
           merchantStoreId,
           created.getId(),
@@ -205,10 +247,20 @@ public class CreateOrderFromCartFlow {
           bearerToken
       );
 
-      log.info("flow=CreateOrderFromCartFlow event=success cartId={} orderId={} subtotal={} discount={} tax={} total={} paymentStatus={} paymentIntentId={}",
-          cartId, created.getId(), subtotal, discount, taxAmount, total,
+      log.info(
+          "flow=CreateOrderFromCartFlow event=success cartId={} orderId={} subtotal={} discount={} tax={} total={} shippingProvider={} shippingServiceLevel={} shippingAmount={} paymentStatus={} paymentIntentId={}",
+          cartId,
+          created.getId(),
+          subtotal,
+          discount,
+          taxAmount,
+          total,
+          shippingSelection != null ? shippingSelection.provider() : null,
+          shippingSelection != null ? shippingSelection.serviceLevel() : null,
+          shippingSelection != null ? shippingSelection.amount() : null,
           paymentAuth != null ? paymentAuth.status() : null,
-          paymentAuth != null ? paymentAuth.paymentIntentId() : null);
+          paymentAuth != null ? paymentAuth.paymentIntentId() : null
+      );
 
       return new CheckoutResult(
           created.getId(),
@@ -220,10 +272,17 @@ public class CreateOrderFromCartFlow {
           paymentAuth.provider(),
           paymentAuth.status(),
           paymentAuth.providerAuthorizationId(),
-          paymentAuth.providerOrderId()
+          paymentAuth.providerOrderId(),
+          shippingSelection
       );
     } catch (CheckoutValidationException ex) {
       log.warn("flow=CreateOrderFromCartFlow event=validation_failed cartId={} reason={}", cartId, ex.getMessage());
+      throw ex;
+    } catch (CheckoutShippingSelectionException ex) {
+      log.warn("flow=CreateOrderFromCartFlow event=shipping_selection_invalid cartId={} reason={}", cartId, ex.getMessage());
+      throw ex;
+    } catch (CheckoutShippingQuoteException ex) {
+      log.warn("flow=CreateOrderFromCartFlow event=shipping_quote_failed cartId={} reason={}", cartId, ex.getMessage());
       throw ex;
     } catch (Exception ex) {
       log.error("flow=CreateOrderFromCartFlow event=failed cartId={} message={}", cartId, ex.getMessage(), ex);
@@ -232,6 +291,91 @@ public class CreateOrderFromCartFlow {
       }
       throw new CheckoutOrchestrationException("Checkout orchestration failed", ex);
     }
+  }
+
+  private ShippingSelection quoteAndSelectShippingOrThrow(
+      CartResponse cart,
+      CreateCheckoutRequest.Destination destination,
+      CreateCheckoutRequest.SelectedShippingQuote selectedShippingQuote,
+      Integer defaultItemWeightGrams,
+      String bearerToken
+  ) {
+    // Contract:
+    // - Calls shipping-service, propagating caller JWT.
+    // - If selection is provided, validates it is present.
+    // - Otherwise selects the cheapest quote.
+    //
+    // Failure modes:
+    // - shipping-service unavailable / returns error => CheckoutShippingQuoteException
+    // - no quotes returned => CheckoutShippingSelectionException (caller must adjust destination/items)
+    // - selection not found => CheckoutShippingSelectionException
+
+    int fallbackWeight = (defaultItemWeightGrams != null && defaultItemWeightGrams >= 1) ? defaultItemWeightGrams : 500;
+
+    ShippingQuoteRequest request = new ShippingQuoteRequest(
+        new ShippingQuoteRequest.Destination(
+            destination.country(),
+            destination.postalCode(),
+            destination.region()
+        ),
+        cart.currency(),
+        cart.items().stream()
+            .map(i -> new ShippingQuoteRequest.Item(i.sku(), i.quantity(), fallbackWeight))
+            .toList()
+    );
+
+    ShippingQuoteResponse response;
+    try {
+      response = shippingServiceClient.getShippingQuotes(request, bearerToken);
+    } catch (ShippingServiceClient.ShippingServiceClientException ex) {
+      throw new CheckoutShippingQuoteException("shipping-service quote request failed", ex);
+    }
+
+    if (response == null || response.requestId() == null) {
+      throw new CheckoutShippingQuoteException("shipping-service returned null/invalid quote response", null);
+    }
+    if (response.quotes() == null || response.quotes().isEmpty()) {
+      throw new CheckoutShippingSelectionException(
+          "No shipping quotes available for the provided destination/items (requestId=" + response.requestId() + ")"
+      );
+    }
+
+    ShippingQuoteResponse.Quote selected = selectQuoteOrThrow(response, selectedShippingQuote);
+
+    return new ShippingSelection(
+        response.requestId(),
+        selected.provider(),
+        selected.serviceLevel(),
+        selected.serviceName(),
+        selected.amount()
+    );
+  }
+
+  private static ShippingQuoteResponse.Quote selectQuoteOrThrow(
+      ShippingQuoteResponse response,
+      CreateCheckoutRequest.SelectedShippingQuote selection
+  ) {
+    if (selection != null) {
+      return response.quotes().stream()
+          .filter(q -> Objects.equals(selection.provider(), q.provider())
+              && Objects.equals(selection.serviceLevel(), q.serviceLevel()))
+          .findFirst()
+          .orElseThrow(() -> new CheckoutShippingSelectionException(
+              "Selected shipping quote not found in returned quotes (requestId=" + response.requestId()
+                  + ", provider=" + selection.provider()
+                  + ", serviceLevel=" + selection.serviceLevel() + ")"
+          ));
+    }
+
+    // Default selection strategy: cheapest by amount (null amounts sorted last).
+    return response.quotes().stream()
+        .min(Comparator.comparing(
+            ShippingQuoteResponse.Quote::amount,
+            Comparator.nullsLast(Comparator.naturalOrder())
+        ))
+        .orElseThrow(() -> new CheckoutShippingSelectionException(
+            "No selectable shipping quote found (requestId=" + response.requestId() + ")"
+        ));
   }
 
   private static void validateCartMatchesRequest(CartResponse cart, UUID cartId, UUID merchantStoreId, UUID customerId) {

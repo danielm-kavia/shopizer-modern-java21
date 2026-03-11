@@ -59,6 +59,9 @@ public class CheckoutController {
         request.customerId(),
         request.storeCode(),
         request.couponCode(),
+        request.destination(),
+        request.selectedShippingQuote(),
+        request.defaultItemWeightGrams(),
         authorization
     );
 
@@ -74,7 +77,12 @@ public class CheckoutController {
             result.paymentProvider(),
             result.paymentStatus(),
             result.providerAuthorizationId(),
-            result.providerOrderId()
+            result.providerOrderId(),
+            result.shippingSelection() != null ? result.shippingSelection().requestId() : null,
+            result.shippingSelection() != null ? result.shippingSelection().provider() : null,
+            result.shippingSelection() != null ? result.shippingSelection().serviceLevel() : null,
+            result.shippingSelection() != null ? result.shippingSelection().serviceName() : null,
+            result.shippingSelection() != null ? result.shippingSelection().amount() : null
         ));
   }
 }
