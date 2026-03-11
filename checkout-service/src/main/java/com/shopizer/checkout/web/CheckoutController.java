@@ -53,13 +53,23 @@ public class CheckoutController {
       @Valid @RequestBody CreateCheckoutRequest request
   ) {
     /** Entry boundary for the CreateOrderFromCartFlow. */
-    UUID orderId = createOrderFromCartFlow.execute(
+    var result = createOrderFromCartFlow.execute(
         request.cartId(),
         request.merchantStoreId(),
         request.customerId(),
+        request.storeCode(),
+        request.couponCode(),
         authorization
     );
 
-    return ResponseEntity.status(HttpStatus.CREATED).body(new CheckoutResponse(orderId, "CREATED"));
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(new CheckoutResponse(
+            result.orderId(),
+            "CREATED",
+            result.subtotal(),
+            result.discount(),
+            result.tax(),
+            result.total()
+        ));
   }
 }

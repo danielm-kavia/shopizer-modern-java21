@@ -25,3 +25,12 @@ shopizer:
     order:
       base-url: ${ORDER_SERVICE_URL:http://localhost:8085}
       timeout-ms: ${ORDER_SERVICE_TIMEOUT_MS:3000}
+    pricing:
+      base-url: ${PRICING_SERVICE_URL:http://localhost:8082}
+      timeout-ms: ${PRICING_SERVICE_TIMEOUT_MS:3000}
+    tax:
+      base-url: ${TAX_SERVICE_URL:http://localhost:8081}
+      timeout-ms: ${TAX_SERVICE_TIMEOUT_MS:3000}
+    promotions:
+      base-url: ${PROMOTIONS_SERVICE_URL:http://localhost:8083}
+      timeout-ms: ${PROMOTIONS_SERVICE_TIMEOUT_MS:3000}

@@ -19,12 +19,33 @@ public class ShopizerClientsProperties {
   @Valid
   private final ServiceClientProperties order = new ServiceClientProperties();
 
+  @Valid
+  private final ServiceClientProperties pricing = new ServiceClientProperties();
+
+  @Valid
+  private final ServiceClientProperties tax = new ServiceClientProperties();
+
+  @Valid
+  private final ServiceClientProperties promotions = new ServiceClientProperties();
+
   public ServiceClientProperties getCart() {
     return cart;
   }
 
   public ServiceClientProperties getOrder() {
     return order;
+  }
+
+  public ServiceClientProperties getPricing() {
+    return pricing;
+  }
+
+  public ServiceClientProperties getTax() {
+    return tax;
+  }
+
+  public ServiceClientProperties getPromotions() {
+    return promotions;
   }
 
   public static class ServiceClientProperties {

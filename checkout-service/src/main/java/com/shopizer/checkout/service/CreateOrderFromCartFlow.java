@@ -2,12 +2,22 @@ package com.shopizer.checkout.service;
 
 import com.shopizer.checkout.client.CartServiceClient;
 import com.shopizer.checkout.client.OrderServiceClient;
+import com.shopizer.checkout.client.PricingServiceClient;
+import com.shopizer.checkout.client.PromotionsServiceClient;
+import com.shopizer.checkout.client.TaxServiceClient;
+import com.shopizer.checkout.client.dto.ApplyCouponRequest;
+import com.shopizer.checkout.client.dto.ApplyCouponResponse;
 import com.shopizer.checkout.client.dto.CartResponse;
 import com.shopizer.checkout.client.dto.CreateOrderItemRequest;
 import com.shopizer.checkout.client.dto.CreateOrderRequest;
 import com.shopizer.checkout.client.dto.OrderResponse;
+import com.shopizer.checkout.client.dto.PricingResolutionResponse;
+import com.shopizer.checkout.client.dto.TaxCalculateRequest;
+import com.shopizer.checkout.client.dto.TaxCalculateResponse;
+import com.shopizer.checkout.client.dto.TaxLine;
 import com.shopizer.checkout.service.CheckoutExceptions.CheckoutOrchestrationException;
 import com.shopizer.checkout.service.CheckoutExceptions.CheckoutValidationException;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -42,17 +52,44 @@ public class CreateOrderFromCartFlow {
 
   private final CartServiceClient cartServiceClient;
   private final OrderServiceClient orderServiceClient;
+  private final PricingServiceClient pricingServiceClient;
+  private final TaxServiceClient taxServiceClient;
+  private final PromotionsServiceClient promotionsServiceClient;
 
-  public CreateOrderFromCartFlow(CartServiceClient cartServiceClient, OrderServiceClient orderServiceClient) {
+  public CreateOrderFromCartFlow(
+      CartServiceClient cartServiceClient,
+      OrderServiceClient orderServiceClient,
+      PricingServiceClient pricingServiceClient,
+      TaxServiceClient taxServiceClient,
+      PromotionsServiceClient promotionsServiceClient
+  ) {
     this.cartServiceClient = cartServiceClient;
     this.orderServiceClient = orderServiceClient;
+    this.pricingServiceClient = pricingServiceClient;
+    this.taxServiceClient = taxServiceClient;
+    this.promotionsServiceClient = promotionsServiceClient;
   }
 
+  /**
+   * Result object for checkout calculation + order creation.
+   *
+   * <p>Invariants:
+   * - subtotal/discount/tax/total are non-null (BigDecimal.ZERO when not applicable).
+   */
+  public record CheckoutResult(UUID orderId, BigDecimal subtotal, BigDecimal discount, BigDecimal tax, BigDecimal total) {}
+
   // PUBLIC_INTERFACE
-  public UUID execute(UUID cartId, UUID merchantStoreId, UUID customerId, String bearerToken) {
-    /** Execute the checkout orchestration to create an order from the given cart. */
-    log.info("flow=CreateOrderFromCartFlow event=start cartId={} merchantStoreId={} customerId={}",
-        cartId, merchantStoreId, customerId);
+  public CheckoutResult execute(
+      UUID cartId,
+      UUID merchantStoreId,
+      UUID customerId,
+      String storeCode,
+      String couponCode,
+      String bearerToken
+  ) {
+    /** Execute the checkout orchestration to calculate totals and create an order from the given cart. */
+    log.info("flow=CreateOrderFromCartFlow event=start cartId={} merchantStoreId={} customerId={} storeCode={} hasCoupon={}",
+        cartId, merchantStoreId, customerId, storeCode, couponCode != null && !couponCode.isBlank());
 
     try {
       CartResponse cart = cartServiceClient.getCart(cartId, bearerToken);
@@ -66,6 +103,56 @@ public class CreateOrderFromCartFlow {
         throw new CheckoutValidationException("Cart is empty; cannot checkout");
       }
 
+      // Phase 1 totals calculation:
+      // 1) pricing-service for each cart line => subtotal
+      // 2) promotions-service (optional coupon) => discount + total after discount (pre-tax in our composition)
+      // 3) tax-service => tax on discounted subtotal (Phase 1 uses lines: qty * unitPrice)
+      String effectiveStoreCode = normalizeStoreCode(storeCode);
+
+      BigDecimal subtotal = calculateSubtotal(cart, effectiveStoreCode, bearerToken);
+      BigDecimal discount = BigDecimal.ZERO;
+
+      if (couponCode != null && !couponCode.isBlank()) {
+        ApplyCouponResponse promo = promotionsServiceClient.applyCoupon(
+            new ApplyCouponRequest(couponCode.trim(), cart.currency(), subtotal, BigDecimal.ZERO, BigDecimal.ZERO),
+            bearerToken
+        );
+        if (promo != null && promo.discountSubtotal() != null) {
+          discount = promo.discountSubtotal();
+        }
+      }
+
+      // Guard against downstream returning a discount larger than subtotal.
+      if (discount.compareTo(subtotal) > 0) {
+        log.warn("flow=CreateOrderFromCartFlow event=discount_clamped cartId={} subtotal={} discount={}",
+            cartId, subtotal, discount);
+        discount = subtotal;
+      }
+
+      BigDecimal discountedSubtotal = subtotal.subtract(discount);
+
+      TaxCalculateResponse tax = taxServiceClient.calculateTax(
+          new TaxCalculateRequest(
+              // Phase 1 tax-service expects a numeric store id. We only have UUID merchantStoreId in this modernized stack.
+              // Minimal approach: pass a stable hash-derived positive long to satisfy API contract until store-id unification exists.
+              // This is logged and easily traceable.
+              stableStoreIdLong(merchantStoreId),
+              cart.items().stream()
+                  .map(i -> new TaxLine(
+                      i.sku(),
+                      i.quantity(),
+                      resolveUnitPriceOrZero(effectiveStoreCode, i.sku(), cart.currency(), i.quantity(), bearerToken)
+                  ))
+                  .toList()
+          ),
+          bearerToken
+      );
+
+      BigDecimal taxAmount = (tax != null && tax.taxAmount() != null) ? tax.taxAmount() : BigDecimal.ZERO;
+
+      BigDecimal total = discountedSubtotal.add(taxAmount);
+
+      // Keep existing order creation minimal/consistent with Phase 1: order-service DTO uses unitAmount long and currently set to 0.
       CreateOrderRequest createOrderRequest = mapCartToCreateOrder(cart);
       OrderResponse created = orderServiceClient.createOrder(createOrderRequest, bearerToken);
 
@@ -73,8 +160,10 @@ public class CreateOrderFromCartFlow {
         throw new CheckoutOrchestrationException("order-service returned null/invalid order response", null);
       }
 
-      log.info("flow=CreateOrderFromCartFlow event=success cartId={} orderId={}", cartId, created.getId());
-      return created.getId();
+      log.info("flow=CreateOrderFromCartFlow event=success cartId={} orderId={} subtotal={} discount={} tax={} total={}",
+          cartId, created.getId(), subtotal, discount, taxAmount, total);
+
+      return new CheckoutResult(created.getId(), subtotal, discount, taxAmount, total);
     } catch (CheckoutValidationException ex) {
       log.warn("flow=CreateOrderFromCartFlow event=validation_failed cartId={} reason={}", cartId, ex.getMessage());
       throw ex;
@@ -114,7 +203,7 @@ public class CreateOrderFromCartFlow {
           CreateOrderItemRequest item = new CreateOrderItemRequest();
           item.setProductId(i.productId());
           item.setQuantity(i.quantity());
-          // Phase 1: no catalog pricing integration yet.
+          // Phase 1: order-service model uses integer minor units; pricing integration is not yet applied to persisted order items.
           item.setUnitAmount(0L);
           return item;
         })
@@ -122,5 +211,59 @@ public class CreateOrderFromCartFlow {
 
     req.setItems(items);
     return req;
+  }
+
+  private BigDecimal calculateSubtotal(CartResponse cart, String storeCode, String bearerToken) {
+    // Pricing-service is resolved per SKU+qty; subtotal is sum of extended prices.
+    return cart.items().stream()
+        .map(i -> {
+          PricingResolutionResponse resolved = pricingServiceClient.resolvePrice(
+              storeCode,
+              i.sku(),
+              cart.currency(),
+              i.quantity(),
+              bearerToken
+          );
+          if (resolved == null || resolved.extendedPrice() == null) {
+            throw new CheckoutOrchestrationException(
+                "pricing-service returned null/invalid pricing response for sku=" + i.sku(), null);
+          }
+          return resolved.extendedPrice();
+        })
+        .reduce(BigDecimal.ZERO, BigDecimal::add);
+  }
+
+  private BigDecimal resolveUnitPriceOrZero(
+      String storeCode,
+      String sku,
+      String currency,
+      int qty,
+      String bearerToken
+  ) {
+    // Tax API requires per-line unitPrice. We resolve it from pricing-service.
+    PricingResolutionResponse resolved = pricingServiceClient.resolvePrice(storeCode, sku, currency, qty, bearerToken);
+    if (resolved == null || resolved.unitPrice() == null) {
+      log.warn("flow=CreateOrderFromCartFlow event=unit_price_missing sku={} storeCode={}", sku, storeCode);
+      return BigDecimal.ZERO;
+    }
+    return resolved.unitPrice();
+  }
+
+  private static String normalizeStoreCode(String storeCode) {
+    if (storeCode == null) {
+      return "DEFAULT";
+    }
+    String trimmed = storeCode.trim();
+    if (trimmed.isBlank()) {
+      return "DEFAULT";
+    }
+    return trimmed;
+  }
+
+  private static long stableStoreIdLong(UUID merchantStoreId) {
+    // Minimal deterministic mapping: create a positive long from UUID hash.
+    // This is an interim adapter until tax-service aligns on store UUID or storeCode.
+    int h = merchantStoreId.toString().hashCode();
+    return Integer.toUnsignedLong(h);
   }
 }

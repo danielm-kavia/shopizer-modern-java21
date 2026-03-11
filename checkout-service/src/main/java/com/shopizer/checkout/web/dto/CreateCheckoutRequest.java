@@ -19,5 +19,11 @@ public record CreateCheckoutRequest(
     @NotNull UUID merchantStoreId,
 
     @Schema(description = "Customer ID", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotNull UUID customerId
+    @NotNull UUID customerId,
+
+    @Schema(description = "Store code for pricing resolution (tenant/store identifier). If omitted, defaults to DEFAULT.", example = "DEFAULT")
+    String storeCode,
+
+    @Schema(description = "Optional coupon code to apply during checkout.", example = "SAVE10")
+    String couponCode
 ) {}
