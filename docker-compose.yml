@@ -1,0 +1,318 @@
+name: shopizer-mvp
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: shopizer-postgres16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: shopizer
+      POSTGRES_USER: shopizer
+      POSTGRES_PASSWORD: shopizer
+    ports:
+      - "5432:5432"
+    volumes:
+      - shopizer_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shopizer -d shopizer"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.5
+    container_name: shopizer-keycloak
+    command:
+      - start-dev
+      - --import-realm
+    environment:
+      # Local dev only. Do not reuse in production.
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./infra/keycloak/realm-export:/opt/keycloak/data/import
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080;echo -e \"GET /realms/shopizer/.well-known/openid-configuration HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n\" >&3; cat <&3 | head -n 1 | grep -q \"200\""]
+      interval: 10s
+      timeout: 5s
+      retries: 60
+
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    container_name: shopizer-gateway
+    restart: unless-stopped
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      customer-service:
+        condition: service_started
+      catalog-service:
+        condition: service_started
+      cart-service:
+        condition: service_started
+      order-service:
+        condition: service_started
+      checkout-service:
+        condition: service_started
+      payment-service:
+        condition: service_started
+      shipping-service:
+        condition: service_started
+      inventory-service:
+        condition: service_started
+      pricing-service:
+        condition: service_started
+      tax-service:
+        condition: service_started
+      promotions-service:
+        condition: service_started
+    environment:
+      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/shopizer
+      CUSTOMER_SERVICE_URL: http://customer-service:8082
+      CATALOG_SERVICE_URL: http://catalog-service:8083
+      CART_SERVICE_URL: http://cart-service:8084
+      ORDER_SERVICE_URL: http://order-service:8085
+      CHECKOUT_SERVICE_URL: http://checkout-service:8086
+      PAYMENT_SERVICE_URL: http://payment-service:8087
+      SHIPPING_SERVICE_URL: http://shipping-service:8088
+      INVENTORY_SERVICE_URL: http://inventory-service:8089
+      PRICING_SERVICE_URL: http://pricing-service:8090
+      TAX_SERVICE_URL: http://tax-service:8091
+      PROMOTIONS_SERVICE_URL: http://promotions-service:8092
+    ports:
+      - "8081:8081"
+
+  customer-service:
+    build:
+      context: .
+      dockerfile: customer-service/Dockerfile
+    container_name: shopizer-customer-service
+    restart: unless-stopped
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/shopizer
+    ports:
+      - "8082:8082"
+
+  catalog-service:
+    build:
+      context: .
+      dockerfile: catalog-service/Dockerfile
+    container_name: shopizer-catalog-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    environment:
+      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/shopizer
+      CATALOG_DB_URL: jdbc:postgresql://postgres:5432/shopizer
+      CATALOG_DB_USER: shopizer
+      CATALOG_DB_PASSWORD: shopizer
+    ports:
+      - "8083:8083"
+
+  cart-service:
+    build:
+      context: .
+      dockerfile: cart-service/Dockerfile
+    container_name: shopizer-cart-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    environment:
+      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/shopizer
+      CART_DB_URL: jdbc:postgresql://postgres:5432/shopizer
+      CART_DB_USER: shopizer
+      CART_DB_PASSWORD: shopizer
+    ports:
+      - "8084:8084"
+
+  order-service:
+    build:
+      context: .
+      dockerfile: order-service/Dockerfile
+    container_name: shopizer-order-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    environment:
+      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/shopizer
+      ORDER_DB_URL: jdbc:postgresql://postgres:5432/shopizer
+      ORDER_DB_USER: shopizer
+      ORDER_DB_PASSWORD: shopizer
+    ports:
+      - "8085:8085"
+
+  checkout-service:
+    build:
+      context: .
+      dockerfile: checkout-service/Dockerfile
+    container_name: shopizer-checkout-service
+    restart: unless-stopped
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      cart-service:
+        condition: service_started
+      order-service:
+        condition: service_started
+      pricing-service:
+        condition: service_started
+      tax-service:
+        condition: service_started
+      promotions-service:
+        condition: service_started
+      inventory-service:
+        condition: service_started
+      payment-service:
+        condition: service_started
+      shipping-service:
+        condition: service_started
+    environment:
+      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/shopizer
+      CART_SERVICE_URL: http://cart-service:8084
+      ORDER_SERVICE_URL: http://order-service:8085
+      PRICING_SERVICE_URL: http://pricing-service:8090
+      TAX_SERVICE_URL: http://tax-service:8091
+      PROMOTIONS_SERVICE_URL: http://promotions-service:8092
+      INVENTORY_SERVICE_URL: http://inventory-service:8089
+      PAYMENT_SERVICE_URL: http://payment-service:8087
+      SHIPPING_SERVICE_URL: http://shipping-service:8088
+    ports:
+      - "8086:8086"
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: payment-service/Dockerfile
+    container_name: shopizer-payment-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    environment:
+      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/shopizer
+      PAYMENT_DB_URL: jdbc:postgresql://postgres:5432/shopizer
+      PAYMENT_DB_USER: shopizer
+      PAYMENT_DB_PASSWORD: shopizer
+      # Phase 1: keep enabled so flow runs; without credentials the provider will respond with 503/502.
+      # Docs will show PAYPAL_ENABLED=false for the MVP happy-path.
+      PAYPAL_ENABLED: "false"
+    ports:
+      - "8087:8087"
+
+  shipping-service:
+    build:
+      context: .
+      dockerfile: shipping-service/Dockerfile
+    container_name: shopizer-shipping-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    environment:
+      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/shopizer
+      SHIPPING_DB_URL: jdbc:postgresql://postgres:5432/shopizer
+      SHIPPING_DB_USER: shopizer
+      SHIPPING_DB_PASSWORD: shopizer
+      SHIPPING_FLYWAY_ENABLED: "true"
+    ports:
+      - "8088:8088"
+
+  inventory-service:
+    build:
+      context: .
+      dockerfile: inventory-service/Dockerfile
+    container_name: shopizer-inventory-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    environment:
+      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/shopizer
+      INVENTORY_DB_URL: jdbc:postgresql://postgres:5432/shopizer
+      INVENTORY_DB_USER: shopizer
+      INVENTORY_DB_PASSWORD: shopizer
+    ports:
+      - "8089:8089"
+
+  pricing-service:
+    build:
+      context: .
+      dockerfile: pricing-service/Dockerfile
+    container_name: shopizer-pricing-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    environment:
+      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/shopizer
+      PRICING_DB_URL: jdbc:postgresql://postgres:5432/shopizer
+      PRICING_DB_USER: shopizer
+      PRICING_DB_PASSWORD: shopizer
+    ports:
+      - "8090:8090"
+
+  tax-service:
+    build:
+      context: .
+      dockerfile: tax-service/Dockerfile
+    container_name: shopizer-tax-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    environment:
+      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/shopizer
+      TAX_DB_URL: jdbc:postgresql://postgres:5432/shopizer
+      TAX_DB_USER: shopizer
+      TAX_DB_PASSWORD: shopizer
+    ports:
+      - "8091:8091"
+
+  promotions-service:
+    build:
+      context: .
+      dockerfile: promotions-service/Dockerfile
+    container_name: shopizer-promotions-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    environment:
+      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/shopizer
+      PROMOTIONS_DB_URL: jdbc:postgresql://postgres:5432/shopizer
+      PROMOTIONS_DB_USER: shopizer
+      PROMOTIONS_DB_PASSWORD: shopizer
+    ports:
+      - "8092:8092"
+
+volumes:
+  shopizer_pgdata:

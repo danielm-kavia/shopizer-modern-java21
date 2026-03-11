@@ -8,6 +8,9 @@ The repository now includes a **multi-module Maven baseline** plus initial Sprin
 ## Documents
 The following documents are maintained in this folder.
 
+### MVP runnable walkthrough
+- `mvp-happy-path.md` - Copy/paste end-to-end happy path via gateway + JWT.
+
 ### Architecture
 The architecture document records what can be concluded from repository evidence and calls out gaps to revisit once code, build configuration, and deployment assets are added.
 
