@@ -1,0 +1,12 @@
+/home/kavia/workspace/code-generation/shopizer-modern-java21/promotions-service/src/main/java/com/shopizer/promotions/PromotionsServiceApplication.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/promotions-service/src/main/java/com/shopizer/promotions/config/OpenApiConfig.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/promotions-service/src/main/java/com/shopizer/promotions/config/SecurityConfig.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/promotions-service/src/main/java/com/shopizer/promotions/domain/CouponDefinition.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/promotions-service/src/main/java/com/shopizer/promotions/repo/CouponDefinitionRepository.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/promotions-service/src/main/java/com/shopizer/promotions/service/ApplyCouponFlow.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/promotions-service/src/main/java/com/shopizer/promotions/service/CouponDiscountCalculator.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/promotions-service/src/main/java/com/shopizer/promotions/service/PromotionsExceptions.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/promotions-service/src/main/java/com/shopizer/promotions/web/ApiExceptionHandler.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/promotions-service/src/main/java/com/shopizer/promotions/web/HealthController.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/promotions-service/src/main/java/com/shopizer/promotions/web/PromotionsController.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/promotions-service/src/main/java/com/shopizer/promotions/web/dto/PromotionsDtos.java

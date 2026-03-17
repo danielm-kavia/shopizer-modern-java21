@@ -85,6 +85,23 @@
         </plugin>
       </plugins>
     </pluginManagement>
+
+    <!--
+      spring-boot:run invoked from the repository root (packaging=pom) would otherwise try to run
+      against this aggregator module and fail with:
+        "Unable to find a suitable main class, please add a mainClass property"
+      Skip execution for the parent only; child modules still run normally.
+    -->
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <inherited>false</inherited>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+    </plugins>
   </build>
 
   <!--

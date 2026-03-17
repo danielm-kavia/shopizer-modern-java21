@@ -1,0 +1,16 @@
+com/shopizer/tax/TaxServiceApplication.class
+com/shopizer/tax/domain/StoreTaxRate.class
+com/shopizer/tax/config/OpenApiConfig.class
+com/shopizer/tax/web/TaxController.class
+com/shopizer/tax/web/ApiExceptionHandler.class
+com/shopizer/tax/repo/StoreTaxRateRepository.class
+com/shopizer/tax/web/dto/TaxDtos$TaxCalculateRequest.class
+com/shopizer/tax/service/TaxCalculationService.class
+com/shopizer/tax/web/dto/TaxDtos.class
+com/shopizer/tax/web/HealthController.class
+com/shopizer/tax/service/TaxExceptions$StoreTaxRateNotFoundException.class
+com/shopizer/tax/web/dto/TaxDtos$TaxLine.class
+com/shopizer/tax/web/dto/TaxDtos$TaxCalculateResponse.class
+com/shopizer/tax/service/TaxExceptions.class
+com/shopizer/tax/web/ApiExceptionHandler$ApiErrorResponse.class
+com/shopizer/tax/config/SecurityConfig.class
