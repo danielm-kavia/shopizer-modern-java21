@@ -16,10 +16,6 @@
 
   <properties>
     <start-class>com.shopizer.gateway.GatewayApplication</start-class>
-  </properties>
-
-  <properties>
-    <start-class>com.shopizer.gateway.GatewayApplication</start-class>
     <!-- Keep version local to the module (mirrors other services) -->
     <springdoc.version>2.6.0</springdoc.version>
   </properties>
