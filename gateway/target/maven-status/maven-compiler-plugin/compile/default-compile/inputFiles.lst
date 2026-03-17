@@ -1,3 +1,5 @@
 /home/kavia/workspace/code-generation/shopizer-modern-java21/gateway/src/main/java/com/shopizer/gateway/GatewayApplication.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/gateway/src/main/java/com/shopizer/gateway/config/OpenApiConfig.java
 /home/kavia/workspace/code-generation/shopizer-modern-java21/gateway/src/main/java/com/shopizer/gateway/config/SecurityConfig.java
 /home/kavia/workspace/code-generation/shopizer-modern-java21/gateway/src/main/java/com/shopizer/gateway/web/HealthController.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/gateway/src/main/java/com/shopizer/gateway/web/LandingController.java
