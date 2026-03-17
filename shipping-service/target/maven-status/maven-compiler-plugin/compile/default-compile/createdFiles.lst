@@ -1,7 +1,7 @@
 com/shopizer/shipping/web/dto/QuoteResponse$Quote.class
 com/shopizer/shipping/web/ApiExceptionHandler.class
-com/shopizer/shipping/web/ShippingQuoteMapper.class
 com/shopizer/shipping/web/dto/QuoteRequest$Item.class
+com/shopizer/shipping/web/ShippingQuoteMapper.class
 com/shopizer/shipping/web/dto/QuoteResponse.class
 com/shopizer/shipping/provider/stub/WeightBasedShippingProvider.class
 com/shopizer/shipping/provider/model/RateQuoteRequest.class

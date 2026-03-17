@@ -4,14 +4,14 @@ com/shopizer/catalog/repo/ProductRepository.class
 com/shopizer/catalog/web/HealthController.class
 com/shopizer/catalog/domain/Product.class
 com/shopizer/catalog/config/SecurityConfig.class
-com/shopizer/catalog/domain/CategoryDescription.class
 com/shopizer/catalog/CatalogServiceApplication.class
+com/shopizer/catalog/domain/CategoryDescription.class
 com/shopizer/catalog/web/dto/ProductSummaryResponse.class
 com/shopizer/catalog/domain/ProductDescription.class
 com/shopizer/catalog/web/dto/CategoryResponse$LocalizedText.class
 com/shopizer/catalog/service/CatalogQueryService.class
-com/shopizer/catalog/web/dto/CategoryResponse.class
 com/shopizer/catalog/domain/Category.class
+com/shopizer/catalog/web/dto/CategoryResponse.class
 com/shopizer/catalog/web/ApiExceptionHandler.class
 com/shopizer/catalog/web/ProductController.class
 com/shopizer/catalog/repo/CategoryRepository.class
