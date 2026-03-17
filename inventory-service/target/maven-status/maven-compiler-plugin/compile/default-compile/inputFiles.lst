@@ -1,0 +1,12 @@
+/home/kavia/workspace/code-generation/shopizer-modern-java21/inventory-service/src/main/java/com/shopizer/inventory/InventoryServiceApplication.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/inventory-service/src/main/java/com/shopizer/inventory/config/OpenApiConfig.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/inventory-service/src/main/java/com/shopizer/inventory/config/SecurityConfig.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/inventory-service/src/main/java/com/shopizer/inventory/domain/InventoryStock.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/inventory-service/src/main/java/com/shopizer/inventory/repo/InventoryStockRepository.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/inventory-service/src/main/java/com/shopizer/inventory/service/InventoryExceptions.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/inventory-service/src/main/java/com/shopizer/inventory/service/InventoryReservationFlow.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/inventory-service/src/main/java/com/shopizer/inventory/web/ApiExceptionHandler.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/inventory-service/src/main/java/com/shopizer/inventory/web/HealthController.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/inventory-service/src/main/java/com/shopizer/inventory/web/InventoryController.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/inventory-service/src/main/java/com/shopizer/inventory/web/InventoryMapper.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/inventory-service/src/main/java/com/shopizer/inventory/web/dto/InventoryDtos.java

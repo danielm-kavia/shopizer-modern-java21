@@ -1,0 +1,47 @@
+server:
+  port: 8087
+
+spring:
+  application:
+    name: payment-service
+
+  datasource:
+    # IMPORTANT: request these env vars from the orchestrator/user as needed
+    url: ${PAYMENT_DB_URL:jdbc:postgresql://localhost:5432/shopizer}
+    username: ${PAYMENT_DB_USER:shopizer}
+    password: ${PAYMENT_DB_PASSWORD:shopizer}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: shopizer
+
+  flyway:
+    enabled: true
+    default-schema: shopizer
+    schemas: shopizer
+    locations: classpath:db/migration
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/shopizer}
+
+payment:
+  paypal:
+    # IMPORTANT: request these env vars from the orchestrator/user as needed
+    enabled: ${PAYPAL_ENABLED:true}
+    base-url: ${PAYPAL_BASE_URL:https://api-m.sandbox.paypal.com}
+    client-id: ${PAYPAL_CLIENT_ID:}
+    client-secret: ${PAYPAL_CLIENT_SECRET:}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

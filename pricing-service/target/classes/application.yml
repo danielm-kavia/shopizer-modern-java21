@@ -1,0 +1,40 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: pricing-service
+
+  datasource:
+    # IMPORTANT: request these env vars from the orchestrator/user as needed
+    url: ${PRICING_DB_URL:jdbc:postgresql://localhost:5432/shopizer}
+    username: ${PRICING_DB_USER:shopizer}
+    password: ${PRICING_DB_PASSWORD:shopizer}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: shopizer
+
+  flyway:
+    enabled: true
+    # Pricing service owns pricing tables in the shared "shopizer" schema for now.
+    default-schema: shopizer
+    schemas: shopizer
+    locations: classpath:db/migration
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/shopizer}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

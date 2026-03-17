@@ -2,6 +2,8 @@ package com.shopizer.pricing.service;
 
 import com.shopizer.pricing.domain.Price;
 import com.shopizer.pricing.repo.PriceRepository;
+import com.shopizer.pricing.service.PricingResolutionModels.PricingResolution;
+import com.shopizer.pricing.service.PricingResolutionModels.PricingResolutionRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
