@@ -1,0 +1,45 @@
+server:
+  port: 8086
+
+spring:
+  application:
+    name: checkout-service
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/shopizer}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+shopizer:
+  clients:
+    cart:
+      base-url: ${CART_SERVICE_URL:http://localhost:8084}
+      timeout-ms: ${CART_SERVICE_TIMEOUT_MS:3000}
+    order:
+      base-url: ${ORDER_SERVICE_URL:http://localhost:8085}
+      timeout-ms: ${ORDER_SERVICE_TIMEOUT_MS:3000}
+    pricing:
+      base-url: ${PRICING_SERVICE_URL:http://localhost:8082}
+      timeout-ms: ${PRICING_SERVICE_TIMEOUT_MS:3000}
+    tax:
+      base-url: ${TAX_SERVICE_URL:http://localhost:8081}
+      timeout-ms: ${TAX_SERVICE_TIMEOUT_MS:3000}
+    promotions:
+      base-url: ${PROMOTIONS_SERVICE_URL:http://localhost:8083}
+      timeout-ms: ${PROMOTIONS_SERVICE_TIMEOUT_MS:3000}
+    inventory:
+      base-url: ${INVENTORY_SERVICE_URL:http://localhost:8087}
+      timeout-ms: ${INVENTORY_SERVICE_TIMEOUT_MS:3000}
+    payment:
+      base-url: ${PAYMENT_SERVICE_URL:http://localhost:8088}
+      timeout-ms: ${PAYMENT_SERVICE_TIMEOUT_MS:5000}
+    shipping:
+      base-url: ${SHIPPING_SERVICE_URL:http://localhost:8089}
+      timeout-ms: ${SHIPPING_SERVICE_TIMEOUT_MS:3000}

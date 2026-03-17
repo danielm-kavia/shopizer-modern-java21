@@ -1,0 +1,17 @@
+/home/kavia/workspace/code-generation/shopizer-modern-java21/catalog-service/src/main/java/com/shopizer/catalog/CatalogServiceApplication.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/catalog-service/src/main/java/com/shopizer/catalog/config/OpenApiConfig.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/catalog-service/src/main/java/com/shopizer/catalog/config/SecurityConfig.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/catalog-service/src/main/java/com/shopizer/catalog/domain/Category.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/catalog-service/src/main/java/com/shopizer/catalog/domain/CategoryDescription.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/catalog-service/src/main/java/com/shopizer/catalog/domain/Product.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/catalog-service/src/main/java/com/shopizer/catalog/domain/ProductDescription.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/catalog-service/src/main/java/com/shopizer/catalog/repo/CategoryRepository.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/catalog-service/src/main/java/com/shopizer/catalog/repo/ProductRepository.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/catalog-service/src/main/java/com/shopizer/catalog/service/CatalogQueryService.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/catalog-service/src/main/java/com/shopizer/catalog/web/ApiExceptionHandler.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/catalog-service/src/main/java/com/shopizer/catalog/web/CategoryController.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/catalog-service/src/main/java/com/shopizer/catalog/web/HealthController.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/catalog-service/src/main/java/com/shopizer/catalog/web/ProductController.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/catalog-service/src/main/java/com/shopizer/catalog/web/dto/CategoryResponse.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/catalog-service/src/main/java/com/shopizer/catalog/web/dto/ProductDetailResponse.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/catalog-service/src/main/java/com/shopizer/catalog/web/dto/ProductSummaryResponse.java

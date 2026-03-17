@@ -1,0 +1,16 @@
+/home/kavia/workspace/code-generation/shopizer-modern-java21/cart-service/src/main/java/com/shopizer/cart/CartServiceApplication.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/cart-service/src/main/java/com/shopizer/cart/config/OpenApiConfig.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/cart-service/src/main/java/com/shopizer/cart/config/SecurityConfig.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/cart-service/src/main/java/com/shopizer/cart/domain/Cart.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/cart-service/src/main/java/com/shopizer/cart/domain/CartItem.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/cart-service/src/main/java/com/shopizer/cart/repo/CartRepository.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/cart-service/src/main/java/com/shopizer/cart/service/CartService.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/cart-service/src/main/java/com/shopizer/cart/web/ApiExceptionHandler.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/cart-service/src/main/java/com/shopizer/cart/web/CartController.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/cart-service/src/main/java/com/shopizer/cart/web/CartMapper.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/cart-service/src/main/java/com/shopizer/cart/web/HealthController.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/cart-service/src/main/java/com/shopizer/cart/web/dto/AddItemRequest.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/cart-service/src/main/java/com/shopizer/cart/web/dto/CartItemResponse.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/cart-service/src/main/java/com/shopizer/cart/web/dto/CartResponse.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/cart-service/src/main/java/com/shopizer/cart/web/dto/CreateOrGetCartRequest.java
+/home/kavia/workspace/code-generation/shopizer-modern-java21/cart-service/src/main/java/com/shopizer/cart/web/dto/SetItemQuantityRequest.java

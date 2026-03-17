@@ -88,11 +88,10 @@
   </build>
 
   <!--
-    Preview/CI environments may not have JDK 21 installed.
-    If Maven runs on JDK 17, compiling with the compiler "release" option set to 21 fails with:
-      "release version 21 not supported"
-    This profile makes the build portable by lowering the compilation release to 17
-    when the running JDK is 17.x. Default remains Java 21.
+    CI environments may run Maven with JDK 17 even when the project targets Java 21.
+    In that case, compiling with release=21 fails (example message: "release version 21 not supported").
+    This profile keeps builds portable by lowering the compilation release to 17 only when the current JDK is 17.
+    Default remains Java 21.
   -->
   <profiles>
     <profile>

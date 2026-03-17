@@ -37,7 +37,17 @@ public class WebClientConfig {
         );
   }
 
-  static ReactorClientHttpConnector connectorWithTimeout(Duration responseTimeout) {
+  // PUBLIC_INTERFACE
+  /**
+   * Build a {@link ReactorClientHttpConnector} configured with connect/read/write/response timeouts.
+   *
+   * <p>This is used by the various downstream service clients (cart/inventory/etc) which live in a
+   * different package, so it must be {@code public}.
+   *
+   * @param responseTimeout overall timeout to apply to the underlying Reactor Netty {@link HttpClient}
+   * @return a configured {@link ReactorClientHttpConnector}
+   */
+  public static ReactorClientHttpConnector connectorWithTimeout(Duration responseTimeout) {
     return new ReactorClientHttpConnector(httpClientWithTimeout(responseTimeout));
   }
 }

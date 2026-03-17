@@ -1,0 +1,41 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: cart-service
+
+  datasource:
+    # IMPORTANT: request these env vars from the orchestrator/user as needed
+    url: ${CART_DB_URL:jdbc:postgresql://localhost:5432/shopizer}
+    username: ${CART_DB_USER:shopizer}
+    password: ${CART_DB_PASSWORD:shopizer}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: shopizer
+
+  flyway:
+    enabled: true
+    # Cart service owns cart objects in the shared "shopizer" schema for now.
+    # If/when schema-per-service is enforced, update this to "cart" (and migrations accordingly).
+    default-schema: shopizer
+    schemas: shopizer
+    locations: classpath:db/migration
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/shopizer}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

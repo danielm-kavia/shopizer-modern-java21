@@ -1,0 +1,41 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: catalog-service
+
+  datasource:
+    # IMPORTANT: request these env vars from the orchestrator/user as needed
+    url: ${CATALOG_DB_URL:jdbc:postgresql://localhost:5432/shopizer}
+    username: ${CATALOG_DB_USER:shopizer}
+    password: ${CATALOG_DB_PASSWORD:shopizer}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: shopizer
+
+  flyway:
+    enabled: true
+    # Catalog service owns catalog objects in the shared "shopizer" schema for now.
+    # If/when schema-per-service is enforced, update this to "catalog" (and migrations accordingly).
+    default-schema: shopizer
+    schemas: shopizer
+    locations: classpath:db/migration
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/shopizer}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

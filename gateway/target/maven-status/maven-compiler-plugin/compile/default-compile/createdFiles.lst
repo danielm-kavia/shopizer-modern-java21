@@ -1,0 +1,3 @@
+com/shopizer/gateway/GatewayApplication.class
+com/shopizer/gateway/config/SecurityConfig.class
+com/shopizer/gateway/web/HealthController.class
