@@ -1,15 +1,44 @@
 #!/bin/sh
 # ----------------------------------------------------------------------------
-# Maven Wrapper bootstrap script for POSIX (Linux/macOS).
-# This file is generated/added to allow builds without a preinstalled Maven.
+# Shopizer (modern-java21) Maven entrypoint.
 #
-# It will download and cache the Maven distribution configured in:
-#   .mvn/wrapper/maven-wrapper.properties
+# Preview environments may block outbound downloads, which breaks the standard
+# Maven Wrapper flow (it downloads a Maven distribution and sometimes the wrapper
+# JAR itself). This repository already vendors a Maven distribution under:
+#   .tools/apache-maven-*/bin/mvn
+#
+# Therefore, this script prefers the vendored Maven by default and only falls
+# back to the Maven Wrapper JAR flow when explicitly requested.
+#
+# Environment variables:
+#   SHOPIZER_MAVEN_USE_WRAPPER_JAR=1  -> force using .mvn/wrapper/maven-wrapper.jar
+#   MAVEN_WRAPPER_OPTS               -> extra JVM opts when using wrapper jar
 # ----------------------------------------------------------------------------
 
 # Resolve the project base directory (where .mvn lives).
 BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+# 1) Prefer vendored Maven distribution (offline-friendly)
+if [ "${SHOPIZER_MAVEN_USE_WRAPPER_JAR:-0}" != "1" ]; then
+  VENDORED_MVN=""
+  for candidate in "$BASE_DIR"/.tools/apache-maven-*/bin/mvn; do
+    if [ -f "$candidate" ]; then
+      VENDORED_MVN="$candidate"
+      break
+    fi
+  done
+
+  if [ -n "$VENDORED_MVN" ]; then
+    # Avoid relying on chmod in restricted environments: execute via sh if needed.
+    if [ -x "$VENDORED_MVN" ]; then
+      exec "$VENDORED_MVN" "$@"
+    else
+      exec sh "$VENDORED_MVN" "$@"
+    fi
+  fi
+fi
+
+# 2) Fallback to Maven Wrapper JAR flow (may require network to fetch distribution)
 # Prefer JAVA_HOME if set; otherwise rely on java on PATH.
 if [ -n "$JAVA_HOME" ]; then
   JAVA_EXEC="$JAVA_HOME/bin/java"
@@ -31,10 +60,10 @@ if [ ! -f "$WRAPPER_PROPERTIES" ]; then
   exit 1
 fi
 
-# The wrapper jar is committed to the repo for hermetic CI builds.
 if [ ! -f "$WRAPPER_JAR" ]; then
   echo "Error: Missing $WRAPPER_JAR" >&2
-  echo "This repository expects the Maven Wrapper jar to be committed alongside the scripts." >&2
+  echo "Tip: this repo can run Maven without downloads via the vendored distribution under .tools/." >&2
+  echo "     Ensure '.tools/apache-maven-*/bin/mvn' exists, or vendor the wrapper jar." >&2
   exit 1
 fi
 
