@@ -1,9 +1,9 @@
 server:
-  # In preview environments (like Kavia), the platform often injects PORT/HOST.
-  # Keep 8081 as the local default to match docker-compose.
+  # In preview environments (like Kavia), the platform injects PORT/HOST.
+  # Default to docker-compose's port for local dev.
   port: ${PORT:8081}
   address: ${HOST:0.0.0.0}
-  # Make redirects / Swagger UI links work correctly behind the platform reverse proxy (https -> http upstream).
+  # Make redirects / Swagger UI links work correctly behind a reverse proxy (https -> http upstream).
   forward-headers-strategy: framework
 
 spring:
@@ -14,24 +14,19 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          # Matches the seeded Keycloak realm under infra/keycloak (see infra/keycloak/realm-export).
-          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/shopizer}
+          # Optional: in preview, Keycloak usually isn't running. Keep empty by default so the app can boot.
+          # Provide KEYCLOAK_ISSUER_URI in environments where you want JWT validation enabled.
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:}
 
   cloud:
     gateway:
       default-filters:
-        # Propagate Authorization header as-is (default), add basic tracing header example.
         - AddRequestHeader=X-Request-Source, gateway
       routes:
         - id: customer-service
           uri: ${CUSTOMER_SERVICE_URL:http://localhost:8082}
           predicates:
             - Path=/api/customers/**
-
-springdoc:
-  api-docs:
-    # Kavia preview points at /openapi.json for this service.
-    path: /openapi.json
 
         - id: catalog-service
           uri: ${CATALOG_SERVICE_URL:http://localhost:8083}
@@ -82,6 +77,11 @@ springdoc:
           uri: ${PROMOTIONS_SERVICE_URL:http://localhost:8092}
           predicates:
             - Path=/api/promotions/**
+
+springdoc:
+  api-docs:
+    # Kavia preview expects the OpenAPI document at /openapi.json
+    path: /openapi.json
 
 management:
   endpoints:
