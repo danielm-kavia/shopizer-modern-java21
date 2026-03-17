@@ -1,5 +1,10 @@
 server:
-  port: 8081
+  # In preview environments (like Kavia), the platform often injects PORT/HOST.
+  # Keep 8081 as the local default to match docker-compose.
+  port: ${PORT:8081}
+  address: ${HOST:0.0.0.0}
+  # Make redirects / Swagger UI links work correctly behind the platform reverse proxy (https -> http upstream).
+  forward-headers-strategy: framework
 
 spring:
   application:
@@ -22,6 +27,11 @@ spring:
           uri: ${CUSTOMER_SERVICE_URL:http://localhost:8082}
           predicates:
             - Path=/api/customers/**
+
+springdoc:
+  api-docs:
+    # Kavia preview points at /openapi.json for this service.
+    path: /openapi.json
 
         - id: catalog-service
           uri: ${CATALOG_SERVICE_URL:http://localhost:8083}

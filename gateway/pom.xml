@@ -18,6 +18,12 @@
     <start-class>com.shopizer.gateway.GatewayApplication</start-class>
   </properties>
 
+  <properties>
+    <start-class>com.shopizer.gateway.GatewayApplication</start-class>
+    <!-- Keep version local to the module (mirrors other services) -->
+    <springdoc.version>2.6.0</springdoc.version>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.springframework.cloud</groupId>
@@ -37,6 +43,13 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+
+    <!-- OpenAPI/Swagger UI (WebFlux) -->
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
+      <version>${springdoc.version}</version>
     </dependency>
 
     <dependency>
