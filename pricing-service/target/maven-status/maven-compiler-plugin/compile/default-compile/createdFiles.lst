@@ -1,10 +1,10 @@
-com/shopizer/pricing/domain/Price.class
 com/shopizer/pricing/config/SecurityConfig.class
+com/shopizer/pricing/domain/Price.class
 com/shopizer/pricing/service/PricingResolutionFlow$PriceType.class
 com/shopizer/pricing/service/PricingResolutionModels$PricingResolution.class
 com/shopizer/pricing/service/PricingResolutionModels$PricingResolutionRequest.class
-com/shopizer/pricing/web/ApiExceptionHandler.class
 com/shopizer/pricing/web/PricingController.class
+com/shopizer/pricing/web/ApiExceptionHandler.class
 com/shopizer/pricing/config/TimeConfig.class
 com/shopizer/pricing/config/OpenApiConfig.class
 com/shopizer/pricing/service/package-info.class

@@ -3,8 +3,8 @@ com/shopizer/order/web/OrderController.class
 com/shopizer/order/domain/OrderStatus.class
 com/shopizer/order/domain/Order.class
 com/shopizer/order/web/OrderMapper.class
-com/shopizer/order/web/dto/OrderResponse.class
 com/shopizer/order/OrderServiceApplication.class
+com/shopizer/order/web/dto/OrderResponse.class
 com/shopizer/order/domain/OrderItem.class
 com/shopizer/order/web/ApiExceptionHandler.class
 com/shopizer/order/domain/PaymentStatus.class
@@ -13,5 +13,5 @@ com/shopizer/order/web/dto/CreateOrderItemRequest.class
 com/shopizer/order/service/OrderService.class
 com/shopizer/order/config/OpenApiConfig.class
 com/shopizer/order/repo/OrderRepository.class
-com/shopizer/order/web/dto/OrderItemResponse.class
 com/shopizer/order/web/HealthController.class
+com/shopizer/order/web/dto/OrderItemResponse.class

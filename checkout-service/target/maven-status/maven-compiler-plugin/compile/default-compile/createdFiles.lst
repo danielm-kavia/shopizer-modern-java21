@@ -16,9 +16,9 @@ com/shopizer/checkout/client/dto/PricingResolutionResponse.class
 com/shopizer/checkout/client/OrderServiceClient$OrderServiceClientException.class
 com/shopizer/checkout/client/ShippingServiceClient$ShippingServiceClientException.class
 com/shopizer/checkout/service/CreateOrderFromCartFlow$CheckoutResult.class
-com/shopizer/checkout/client/dto/ShippingQuoteResponse$Quote.class
-com/shopizer/checkout/client/CartServiceClient$CartServiceClientException.class
 com/shopizer/checkout/client/PaymentServiceClient.class
+com/shopizer/checkout/client/CartServiceClient$CartServiceClientException.class
+com/shopizer/checkout/client/dto/ShippingQuoteResponse$Quote.class
 com/shopizer/checkout/service/CreateOrderFromCartFlow$ShippingSelection.class
 com/shopizer/checkout/config/PropertiesConfig.class
 com/shopizer/checkout/client/CartServiceClient.class
@@ -26,8 +26,8 @@ com/shopizer/checkout/config/WebClientConfig.class
 com/shopizer/checkout/service/CheckoutExceptions$CheckoutShippingSelectionException.class
 com/shopizer/checkout/service/CreateOrderFromCartFlow.class
 com/shopizer/checkout/client/dto/ShippingQuoteResponse.class
-com/shopizer/checkout/client/InventoryServiceClient.class
 com/shopizer/checkout/client/PromotionsServiceClient.class
+com/shopizer/checkout/client/InventoryServiceClient.class
 com/shopizer/checkout/client/InventoryServiceClient$InventoryReserveFailedException.class
 com/shopizer/checkout/client/PricingServiceClient.class
 com/shopizer/checkout/client/dto/CartResponse.class
@@ -35,8 +35,8 @@ com/shopizer/checkout/client/dto/ApplyCouponRequest.class
 com/shopizer/checkout/client/dto/ShippingQuoteRequest$Destination.class
 com/shopizer/checkout/client/OrderServiceClient.class
 com/shopizer/checkout/web/CheckoutController.class
-com/shopizer/checkout/client/dto/TaxLine.class
 com/shopizer/checkout/client/InventoryServiceClient$InventoryServiceClientException.class
+com/shopizer/checkout/client/dto/TaxLine.class
 com/shopizer/checkout/web/dto/CheckoutResponse.class
 com/shopizer/checkout/client/dto/TaxCalculateResponse.class
 com/shopizer/checkout/client/TaxServiceClient.class
@@ -45,8 +45,8 @@ com/shopizer/checkout/client/dto/TaxCalculateRequest.class
 com/shopizer/checkout/config/SecurityConfig.class
 com/shopizer/checkout/CheckoutServiceApplication.class
 com/shopizer/checkout/client/dto/ShippingQuoteRequest$Item.class
-com/shopizer/checkout/web/dto/CreateCheckoutRequest$Destination.class
 com/shopizer/checkout/service/CheckoutExceptions.class
+com/shopizer/checkout/web/dto/CreateCheckoutRequest$Destination.class
 com/shopizer/checkout/client/ShippingServiceClient.class
 com/shopizer/checkout/config/ShopizerClientsProperties$ServiceClientProperties.class
 com/shopizer/checkout/client/dto/CreateOrderRequest.class
