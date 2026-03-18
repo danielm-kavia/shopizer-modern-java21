@@ -1,5 +1,7 @@
 server:
-  port: 8083
+  # In preview environments, the platform may inject PORT/HOST.
+  port: ${PORT:8083}
+  address: ${HOST:0.0.0.0}
 
 spring:
   application:

@@ -1,5 +1,6 @@
 com/shopizer/gateway/config/SecurityConfig.class
 com/shopizer/gateway/GatewayApplication.class
 com/shopizer/gateway/web/HealthController.class
-com/shopizer/gateway/web/LandingController.class
 com/shopizer/gateway/config/OpenApiConfig.class
+com/shopizer/gateway/web/GatewayErrorHandler.class
+com/shopizer/gateway/web/LandingController.class
