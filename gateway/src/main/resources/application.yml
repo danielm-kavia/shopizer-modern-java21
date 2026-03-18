@@ -31,12 +31,12 @@ spring:
         - id: catalog-service
           uri: ${CATALOG_SERVICE_URL:http://localhost:8083}
           predicates:
-            - Path=/api/catalog/**
+            - Path=/api/v1/catalog/**
 
         - id: cart-service
           uri: ${CART_SERVICE_URL:http://localhost:8084}
           predicates:
-            - Path=/api/cart/**
+            - Path=/api/v1/carts/**
 
         - id: order-service
           uri: ${ORDER_SERVICE_URL:http://localhost:8085}
