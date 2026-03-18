@@ -42,6 +42,15 @@ public record PagedResponse<T>(
   }
 
   /**
+   * Alias for {@link #content()} to support clients that expect a `products` array when listing
+   * store products.
+   */
+  @JsonProperty("products")
+  public List<T> products() {
+    return content;
+  }
+
+  /**
    * Spring `Page`-like convenience field.
    */
   @JsonProperty("numberOfElements")
