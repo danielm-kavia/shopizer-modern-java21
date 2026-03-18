@@ -144,6 +144,7 @@ public class CreateOrderFromCartFlow {
       UUID customerId,
       String storeCode,
       String couponCode,
+      String paymentMethod,
       CreateCheckoutRequest.Destination destination,
       CreateCheckoutRequest.SelectedShippingQuote selectedShippingQuote,
       Integer defaultItemWeightGrams,
@@ -151,12 +152,13 @@ public class CreateOrderFromCartFlow {
   ) {
     /** Execute the checkout orchestration to calculate totals, quote/select shipping, create order, and authorize payment. */
     log.info(
-        "flow=CreateOrderFromCartFlow event=start cartId={} merchantStoreId={} customerId={} storeCode={} hasCoupon={} destinationCountry={} selectedShippingProvided={}",
+        "flow=CreateOrderFromCartFlow event=start cartId={} merchantStoreId={} customerId={} storeCode={} hasCoupon={} paymentMethod={} destinationCountry={} selectedShippingProvided={}",
         cartId,
         merchantStoreId,
         customerId,
         storeCode,
         couponCode != null && !couponCode.isBlank(),
+        paymentMethod,
         destination != null ? destination.country() : null,
         selectedShippingQuote != null
     );
@@ -235,6 +237,17 @@ public class CreateOrderFromCartFlow {
 
       if (created == null || created.getId() == null) {
         throw new CheckoutOrchestrationException("order-service returned null/invalid order response", null);
+      }
+
+      // Phase 1: Payment authorization currently always uses PayPal.
+      // We accept `paymentMethod` for forward-compatibility with UI selection, but ignore/override it for now.
+      if (paymentMethod != null && !paymentMethod.isBlank()
+          && !"paypal".equalsIgnoreCase(paymentMethod.trim())
+          && !"card".equalsIgnoreCase(paymentMethod.trim())
+          && !"cod".equalsIgnoreCase(paymentMethod.trim())) {
+        log.warn("flow=CreateOrderFromCartFlow event=payment_method_unknown cartId={} paymentMethod={}", cartId, paymentMethod);
+      } else if (paymentMethod != null && !paymentMethod.isBlank() && !"paypal".equalsIgnoreCase(paymentMethod.trim())) {
+        log.info("flow=CreateOrderFromCartFlow event=payment_method_ignored_phase1 cartId={} paymentMethod={}", cartId, paymentMethod);
       }
 
       AuthorizePaymentResponse paymentAuth = authorizePaymentOrThrow(

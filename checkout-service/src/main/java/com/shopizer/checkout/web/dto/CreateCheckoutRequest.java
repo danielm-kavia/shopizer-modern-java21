@@ -32,6 +32,12 @@ public record CreateCheckoutRequest(
     @Schema(description = "Optional coupon code to apply during checkout.", example = "SAVE10")
     String couponCode,
 
+    @Schema(
+        description = "UI-selected payment method (placeholder). Phase 1 currently authorizes PayPal regardless; other values are accepted for forward-compatibility.",
+        example = "paypal"
+    )
+    String paymentMethod,
+
     @NotNull @Valid
     @Schema(description = "Shipping destination used for obtaining rate quotes", requiredMode = Schema.RequiredMode.REQUIRED)
     Destination destination,

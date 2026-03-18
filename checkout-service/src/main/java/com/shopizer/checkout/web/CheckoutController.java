@@ -59,6 +59,7 @@ public class CheckoutController {
         request.customerId(),
         request.storeCode(),
         request.couponCode(),
+        request.paymentMethod(),
         request.destination(),
         request.selectedShippingQuote(),
         request.defaultItemWeightGrams(),
