@@ -1,4 +1,4 @@
 com/shopizer/customer/web/HealthController.class
 com/shopizer/customer/CustomerServiceApplication.class
-com/shopizer/customer/config/SecurityConfig.class
 com/shopizer/customer/web/CustomerController.class
+com/shopizer/customer/config/SecurityConfig.class

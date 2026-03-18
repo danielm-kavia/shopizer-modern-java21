@@ -1,5 +1,5 @@
-com/shopizer/pricing/config/SecurityConfig.class
 com/shopizer/pricing/domain/Price.class
+com/shopizer/pricing/config/SecurityConfig.class
 com/shopizer/pricing/service/PricingResolutionFlow$PriceType.class
 com/shopizer/pricing/service/PricingResolutionModels$PricingResolution.class
 com/shopizer/pricing/service/PricingResolutionModels$PricingResolutionRequest.class

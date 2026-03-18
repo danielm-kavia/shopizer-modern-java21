@@ -11,8 +11,8 @@ com/shopizer/promotions/PromotionsServiceApplication.class
 com/shopizer/promotions/repo/CouponDefinitionRepository.class
 com/shopizer/promotions/service/PromotionsExceptions$CouponInactiveException.class
 com/shopizer/promotions/domain/CouponDefinition.class
-com/shopizer/promotions/web/PromotionsController.class
 com/shopizer/promotions/web/dto/PromotionsDtos$ApplyCouponRequest.class
+com/shopizer/promotions/web/PromotionsController.class
 com/shopizer/promotions/service/ApplyCouponFlow$ApplyCouponRequest.class
 com/shopizer/promotions/web/ApiExceptionHandler.class
 com/shopizer/promotions/service/CouponDiscountCalculator.class

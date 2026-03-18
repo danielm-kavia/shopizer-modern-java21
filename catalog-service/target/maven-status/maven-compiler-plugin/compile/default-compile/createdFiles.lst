@@ -1,5 +1,5 @@
-com/shopizer/catalog/web/dto/ProductDetailResponse.class
 com/shopizer/catalog/web/dto/ProductDetailResponse$LocalizedText.class
+com/shopizer/catalog/web/dto/ProductDetailResponse.class
 com/shopizer/catalog/repo/ProductRepository.class
 com/shopizer/catalog/web/HealthController.class
 com/shopizer/catalog/domain/Product.class
@@ -14,6 +14,6 @@ com/shopizer/catalog/domain/Category.class
 com/shopizer/catalog/web/dto/CategoryResponse.class
 com/shopizer/catalog/web/ApiExceptionHandler.class
 com/shopizer/catalog/web/ProductController.class
-com/shopizer/catalog/repo/CategoryRepository.class
 com/shopizer/catalog/config/OpenApiConfig.class
+com/shopizer/catalog/repo/CategoryRepository.class
 com/shopizer/catalog/web/CategoryController.class

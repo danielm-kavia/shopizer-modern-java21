@@ -14,17 +14,22 @@ BEGIN;
 -- Store / language IDs are reused across services (where UUID columns are used).
 DO $$
 BEGIN
-  -- A single MVP store.
-  INSERT INTO shopizer.merchant_store (id, store_code, store_name, created_at, updated_at)
-  VALUES (
-    '00000000-0000-0000-0000-000000000001'::uuid,
-    'DEFAULT',
-    'Default Store',
-    now(),
-    now()
-  )
-  ON CONFLICT (id) DO NOTHING;
+  -- A single MVP store (only if the shared store table exists in this environment).
+  -- Some environments may run only service-local migrations; in that case, merchant_store isn't present.
+  IF to_regclass('shopizer.merchant_store') IS NOT NULL THEN
+    INSERT INTO shopizer.merchant_store (id, store_code, store_name, created_at, updated_at)
+    VALUES (
+      '00000000-0000-0000-0000-000000000001'::uuid,
+      'DEFAULT',
+      'Default Store',
+      now(),
+      now()
+    )
+    ON CONFLICT (id) DO NOTHING;
+  END IF;
 
+  -- Products reference the deterministic MVP store UUID regardless of whether merchant_store is present,
+  -- because product.merchant_store_id is not enforced via FK in this service-local schema.
   -- Product 1
   INSERT INTO shopizer.product (id, merchant_store_id, sku, type, is_available, created_at, updated_at)
   VALUES (
