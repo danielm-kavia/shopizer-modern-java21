@@ -32,7 +32,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8080/realms/shopizer}
+          # In preview environments, Keycloak may not be running. If empty, SecurityConfig permits all.
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:}
 
 management:
   endpoints:
