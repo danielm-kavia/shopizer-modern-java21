@@ -2,24 +2,35 @@ spring:
   application:
     name: shopizer-modern-java21-gateway
 
+server:
+  port: ${PORT:3001}
+
+spring:
   cloud:
     gateway:
       # Route requests from the frontend (/api/**) to the appropriate backend services.
-      # This file intentionally avoids rewriting catalog endpoints to the preview stubs.
       routes:
         - id: catalog-service
           uri: ${CATALOG_SERVICE_URL:http://catalog-service}
           predicates:
             - Path=/api/v1/catalog/**
-          # IMPORTANT:
-          # Previously this route rewrote /api/v1/catalog/** to /__preview/catalog/**.
-          # That rewrite is now removed so requests go to the real catalog-service API.
+
+        # Fallback: proxy any other /api/** calls to the legacy shopizer container.
+        # This helps previews come up even if only the legacy monolith is present.
+        - id: legacy-shopizer
+          uri: ${SHOPIZER_URL:http://shopizer:8080}
+          predicates:
+            - Path=/api/**
 
 management:
   endpoints:
     web:
       exposure:
         include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
 
 logging:
   level:
