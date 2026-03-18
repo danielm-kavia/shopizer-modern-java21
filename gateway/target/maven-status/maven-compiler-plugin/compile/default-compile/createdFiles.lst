@@ -1,6 +1,10 @@
 com/shopizer/gateway/config/SecurityConfig.class
 com/shopizer/gateway/GatewayApplication.class
 com/shopizer/gateway/web/HealthController.class
+com/shopizer/gateway/preview/catalog/PreviewCatalogController.class
+com/shopizer/gateway/preview/catalog/dto/CategoryResponse.class
+com/shopizer/gateway/preview/catalog/dto/PagedResponse.class
 com/shopizer/gateway/config/OpenApiConfig.class
 com/shopizer/gateway/web/GatewayErrorHandler.class
+com/shopizer/gateway/preview/catalog/dto/CategoryResponse$LocalizedText.class
 com/shopizer/gateway/web/LandingController.class

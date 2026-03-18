@@ -24,19 +24,22 @@ spring:
         - AddRequestHeader=X-Request-Source, gateway
       routes:
         # NOTE:
-        # - These defaults assume the gateway runs in the same service-network as the other services
-        #   (docker-compose service DNS names or Kubernetes service names).
-        # - In environments where you expose services differently, override via *_SERVICE_URL env vars.
+        # - In Kavia preview, only the gateway process is running. There is no catalog-service listening on localhost:8083,
+        #   so we forward /api/v1/catalog/** to an internal preview stub controller.
+        # - In docker-compose/local stacks, activate the "docker" profile to route to the real catalog-service.
         - id: customer-service
           # Default to localhost for preview/non-docker environments. docker-compose/k8s should override via env vars.
           uri: ${CUSTOMER_SERVICE_URL:http://localhost:8082}
           predicates:
             - Path=/api/customers/**
 
-        - id: catalog-service
-          uri: ${CATALOG_SERVICE_URL:http://localhost:8083}
+        - id: catalog-service-preview
+          uri: forward:/__preview
           predicates:
             - Path=/api/v1/catalog/**
+          filters:
+            # Important: avoid forwarding to the same /api/v1/catalog/** path (would re-match this route and loop).
+            - RewritePath=/api/v1/catalog(?<segment>/?.*), /__preview/catalog${segment}
 
         - id: cart-service
           uri: ${CART_SERVICE_URL:http://localhost:8084}
@@ -93,3 +96,67 @@ management:
     web:
       exposure:
         include: health,info
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+  cloud:
+    gateway:
+      routes:
+        - id: customer-service
+          uri: ${CUSTOMER_SERVICE_URL:http://customer-service:8082}
+          predicates:
+            - Path=/api/customers/**
+
+        - id: catalog-service
+          uri: ${CATALOG_SERVICE_URL:http://catalog-service:8083}
+          predicates:
+            - Path=/api/v1/catalog/**
+
+        - id: cart-service
+          uri: ${CART_SERVICE_URL:http://cart-service:8084}
+          predicates:
+            - Path=/api/v1/carts/**
+
+        - id: order-service
+          uri: ${ORDER_SERVICE_URL:http://order-service:8085}
+          predicates:
+            - Path=/api/orders/**
+
+        - id: checkout-service
+          uri: ${CHECKOUT_SERVICE_URL:http://checkout-service:8086}
+          predicates:
+            - Path=/api/checkout/**
+
+        - id: payment-service
+          uri: ${PAYMENT_SERVICE_URL:http://payment-service:8087}
+          predicates:
+            - Path=/api/payments/**
+
+        - id: shipping-service
+          uri: ${SHIPPING_SERVICE_URL:http://shipping-service:8088}
+          predicates:
+            - Path=/api/shipping/**
+
+        - id: inventory-service
+          uri: ${INVENTORY_SERVICE_URL:http://inventory-service:8089}
+          predicates:
+            - Path=/api/inventory/**
+
+        - id: pricing-service
+          uri: ${PRICING_SERVICE_URL:http://pricing-service:8090}
+          predicates:
+            - Path=/api/pricing/**
+
+        - id: tax-service
+          uri: ${TAX_SERVICE_URL:http://tax-service:8091}
+          predicates:
+            - Path=/api/tax/**
+
+        - id: promotions-service
+          uri: ${PROMOTIONS_SERVICE_URL:http://promotions-service:8092}
+          predicates:
+            - Path=/api/promotions/**

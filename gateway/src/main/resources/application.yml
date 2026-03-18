@@ -34,7 +34,12 @@ spring:
             - Path=/api/customers/**
 
         - id: catalog-service-preview
-          uri: forward:/__preview
+          # Forward internally to the gateway app itself, preserving the rewritten path.
+          #
+          # Important: using `forward:/__preview` would dispatch to the fixed path `/__preview` (dropping the rewritten
+          # `/__preview/catalog/...` path), which then falls through to static resource handling and triggers:
+          # "No static resource __preview".
+          uri: forward:/
           predicates:
             - Path=/api/v1/catalog/**
           filters:
