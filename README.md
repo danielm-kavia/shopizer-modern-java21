@@ -39,6 +39,11 @@ See the copy/paste walkthrough:
 
 - `docs/mvp-happy-path.md`
 
+## Finding your Store UUID (`storeId`)
+If you’re not sure what to use for `{storeId}` in endpoints like `/api/v1/catalog/stores/{storeId}/categories`, see:
+
+- `docs/how-to-find-store-uuid.md`
+
 ## Local infrastructure (legacy split stacks)
 The `infra/` folder also contains the original split compose templates:
 
