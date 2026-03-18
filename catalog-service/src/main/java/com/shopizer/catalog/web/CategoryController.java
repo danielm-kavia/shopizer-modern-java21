@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Min;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,6 +41,7 @@ public class CategoryController {
       summary = "List categories",
       description = "Lists categories for a given merchant store."
   )
+  @Transactional(readOnly = true)
   public Page<CategoryResponse> listCategories(
       @Parameter(description = "Merchant store id", required = true)
       @PathVariable("storeId") UUID storeId,
@@ -56,6 +58,7 @@ public class CategoryController {
       summary = "Get category by id",
       description = "Fetch a category by id (not store-scoped in path). The response includes the owning store id."
   )
+  @Transactional(readOnly = true)
   public CategoryResponse getCategory(
       @Parameter(description = "Merchant store id (used for routing/authorization decisions at gateway; not enforced here)", required = true)
       @PathVariable("storeId") UUID storeId,
