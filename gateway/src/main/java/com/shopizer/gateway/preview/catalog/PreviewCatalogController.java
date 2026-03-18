@@ -53,6 +53,23 @@ public class PreviewCatalogController {
 
     int from = Math.min(all.size(), safePage * safeSize);
     int to = Math.min(all.size(), from + safeSize);
+
+    /*
+     * Be forgiving about page numbering: some clients send 1-based page indexes.
+     * If the requested page yields an empty slice but the previous page would contain data,
+     * shift down by one to avoid returning an empty stub response.
+     */
+    if (!all.isEmpty() && safePage > 0 && from >= to) {
+      int candidatePage = safePage - 1;
+      int candidateFrom = Math.min(all.size(), candidatePage * safeSize);
+      int candidateTo = Math.min(all.size(), candidateFrom + safeSize);
+      if (candidateFrom < candidateTo) {
+        safePage = candidatePage;
+        from = candidateFrom;
+        to = candidateTo;
+      }
+    }
+
     List<CategoryResponse> content = all.subList(from, to);
 
     long totalElements = all.size();
